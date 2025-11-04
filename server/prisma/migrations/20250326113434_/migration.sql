@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "User" ALTER COLUMN "verifyOtpExpireAt" SET DATA TYPE BIGINT,
+ALTER COLUMN "resetOtpExpireAt" SET DATA TYPE BIGINT;

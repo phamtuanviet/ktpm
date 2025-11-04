@@ -1,0 +1,21 @@
+config:
+  target: "http://127.0.0.1:5002"
+  
+  # Cấu hình để thấy sự khác biệt rõ nhất
+  phases:
+    - duration: 60  # Chạy trong 60 giây
+      arrivalRate: 500 # Bắt đầu với 20 users/giây
+      max_duration: 50 # Giới hạn tối đa 50 users/giây
+      # rampTo: 50 # (Tùy chọn) Có thể tăng dần lên 50 users/giây
+      name: "CPU Stress Phase"
+
+  # Cấu hình cơ bản
+  http:
+    pool: 500
+    timeout: 30 # Tăng timeout để tránh lỗi ETIMEDOUT sớm
+
+scenarios:
+  - name: "CPU Intensive Fibonacci Request"
+    flow:
+      - get:
+          url: "/api/test/check-health1" # Gọi endpoint nặng

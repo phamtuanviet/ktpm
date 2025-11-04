@@ -1,0 +1,162 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+    // binaryTargets = ["native"]
+
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum FlightStatus {
+  SCHEDULED
+  DELAYED
+  DEPARTED
+  ARRIVED
+  CANCELLED
+}
+
+enum SeatClass {
+  ECONOMY
+  BUSINESS
+  FIRST_CLASS
+}
+
+enum PassengerType {
+  ADULT
+  CHILD
+  INFANT
+}
+
+model User {
+  id                String @id @default(uuid())
+  name              String
+  email             String @unique
+  password          String
+  verifyOtp         String @default("")
+  verifyOtpExpireAt BigInt @default(0)
+  isAccountVerified Boolean @default(false)
+  resetOtp          String @default("")
+  resetOtpExpireAt  BigInt @default(0)
+  role              Role @default(USER)
+  tickets           Ticket[] @relation()
+}
+
+model Airport {
+  id        Int     @id @default(autoincrement())
+  name      String
+  iataCode  String @unique @db.VarChar(3)
+  icaoCode  String @unique @db.VarChar(4)
+  country   String 
+  city      String
+  latitude  Float
+  longitude Float
+  type      String
+  departureFlights Flight[] @relation("DepartureAirport")
+  arrivalFlights   Flight[] @relation("ArrivalAirport")
+}
+
+model News {
+  id           Int      @id @default(autoincrement())
+  title        String
+  content      String   
+  thumbnailUrl String?
+  isPublished  Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+
+model Flight {
+  id                  String        @id @default(uuid())
+  flightNumber        String        @unique
+  departureAirport    Airport       @relation("DepartureAirport", fields: [departureAirportId], references: [id],onDelete: Restrict)
+  departureAirportId  Int
+  arrivalAirport      Airport       @relation("ArrivalAirport", fields: [arrivalAirportId], references: [id],onDelete: Restrict)
+  arrivalAirportId    Int
+  departureTime       DateTime
+  arrivalTime         DateTime
+  estimatedDeparture  DateTime?
+  estimatedArrival    DateTime?
+  aircraft            Aircraft      @relation("Aircraft", fields: [aircraftId], references: [id],onDelete: Restrict)
+  aircraftId          String     
+  status              FlightStatus  @default(SCHEDULED)
+  tickets             Ticket[]
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  seats               FlightSeat[]
+}
+
+model Ticket {
+  id                    String    @id @default(uuid())
+  flight                Flight    @relation(fields: [flightId], references: [id],onDelete: Restrict)
+  flightId              String
+  passengerName         String?
+  passengerEmail        String?
+  bookingReference      String    @unique
+  seatNumber            String?
+  isCancelled           Boolean   @default(false)
+  passengerType         PassengerType  @default(ADULT)
+  discount              Float     @default(0)
+  bookedAt              DateTime  @default(now())
+  bookedBy              User?     @relation(fields: [bookedById], references: [id],onDelete: Restrict)
+  bookedById            String?
+  flightSeat            FlightSeat  @relation(fields: [flightSeatId], references: [id],onDelete: Restrict)
+  flightSeatId          Int     
+  passenger             Passenger?    @relation("Ticket_Passenger", fields: [passengerId], references: [id])
+  passengerId           String? 
+  cancelCode            String    @unique
+}
+
+model Aircraft {
+  id              String   @id @default(uuid())
+  name            String   @unique
+  manufacturer    String
+  flights         Flight[] @relation("Aircraft")
+}
+
+model FlightSeat {
+  id           Int       @id @default(autoincrement())
+  flight       Flight    @relation(fields: [flightId], references: [id],onDelete: Restrict)
+  flightId     String
+  seatClass    SeatClass 
+  totalSeats   Int       
+  bookedSeats  Int       @default(0)
+  createdAt    DateTime  @default(now())
+  price        Float
+  tickets      Ticket[]  @relation()
+
+  @@unique([flightId, seatClass])
+
+}
+
+model Passenger {
+  id        String   @id @default(uuid())
+  fullName  String
+  email     String
+  dob       DateTime?    
+  passport  String?      
+  tickets   Ticket[]     @relation("Ticket_Passenger")
+}
+
+model EmailVerification {
+  id        String   @id @default(uuid())
+  email     String
+  otp       String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  @@index([email])
+}

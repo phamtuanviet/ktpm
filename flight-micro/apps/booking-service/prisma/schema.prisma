@@ -1,0 +1,108 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+// Booking Service sẽ sử dụng DB riêng của nó
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =======================================================
+// ENUMS (Copy từ schema tổng thể để đảm bảo tính nhất quán)
+// =======================================================
+
+enum SeatClass {
+  ECONOMY
+  BUSINESS
+  FIRST_CLASS
+}
+
+enum PassengerType {
+  ADULT
+  CHILD
+  INFANT
+}
+
+enum FlightStatus {
+  SCHEDULED
+  DEPARTED
+  ARRIVED
+  CANCELLED
+  DELAYED
+}
+// =======================================================
+// CORE MODELS CỦA BOOKING SERVICE
+// =======================================================
+
+// Model Passenger: LƯU trữ thông tin hành khách cụ thể.
+// Dữ liệu này độc lập và quan trọng cho đặt vé.
+model Passenger {
+  id        String    @id @default(uuid())
+  fullName  String
+  email     String
+  dob       DateTime?
+  passport  String?
+  passengerType     PassengerType   @default(ADULT)
+  tickets   Ticket[]  @relation("Ticket_Passenger")
+  @@index([email])
+  @@index([fullName])
+}
+
+// Model FlightSeat: LƯU trữ thông tin về loại ghế, số lượng và giá.
+// Thông tin này rất quan trọng để kiểm tra tính khả dụng và tính giá
+// trong quá trình đặt vé. Nó tham chiếu đến FlightId (external)
+model FlightSeat {
+  id          String        @id @default(uuid())
+  // flightId chỉ là tham chiếu để đảm bảo Unique Constraint, 
+  // Dữ liệu chi tiết về Flight sẽ được truy vấn từ Flight Service.
+  flightId         String  
+  seatClass                 SeatClass
+  totalSeats                Int
+  bookedSeats               Int        @default(0) // Quan trọng nhất, để kiểm tra chỗ trống
+  price                     Float
+  tickets                   Ticket[]   @relation()
+  createdAt                 DateTime   @default(now())
+
+  // Đảm bảo không trùng loại ghế trên cùng 1 chuyến bay
+  @@unique([seatClass])
+  @@index([flightId])
+}
+
+
+// Model Ticket: Model TRUNG TÂM của Booking Service.
+// Chứa tất cả thông tin đặt chỗ và tham chiếu đến các Service khác.
+model Ticket {
+  id                String          @id @default(uuid())
+  
+  // External IDs (Tham chiếu tới các service khác)
+  
+  bookingReference  String          @unique // Mã đặt chỗ (PNR)
+  cancelCode        String          @unique // Mã hủy vé
+  
+  // Thông tin ghế và hành khách
+  seatNumber        String?
+  flightSeat        FlightSeat      @relation(fields: [flightSeatId], references: [id])
+  flightSeatId      String
+  passenger         Passenger?      @relation("Ticket_Passenger", fields: [passengerId], references: [id])
+  passengerId       String  
+  // Thông tin giá và trạng thái
+  discount          Float           @default(0)
+  isCancelled       Boolean         @default(false)
+  
+  // Audit fields
+  bookedAt          DateTime        @default(now()) 
+  cancelAt        DateTime?
+  @@index([flightSeatId])
+  @@index([passengerId])
+  @@index([bookingReference])
+  @@index([cancelCode])
+  @@index([seatNumber])
+}
