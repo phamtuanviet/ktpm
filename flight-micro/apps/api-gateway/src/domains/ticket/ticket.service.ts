@@ -124,4 +124,12 @@ export class TicketService {
       `${this.FLIGHT_URL}/count-tickets-stats`,
     );
   }
+
+  async getRevenueStats(@Req() req: Request) {
+    const { result } = await this.proxyService.forward(
+      req,
+      `${this.baseUrl}/revenue-stats`,
+    );
+    return { result };
+  }
 }

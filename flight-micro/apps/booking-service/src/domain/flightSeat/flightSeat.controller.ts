@@ -1,6 +1,7 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { FlightSeatService } from './flightSeat.service';
 import { CreateFlightSeatsForFlightDto } from './dto/createFlighSeatForFlight.dto';
+import { GetSeatsByFlightsDto } from './dto/getSeatsByFlights.dto';
 
 @Controller('api/flight-seat')
 export class FlightSeatController {
@@ -14,6 +15,11 @@ export class FlightSeatController {
   @Get('flight/:id')
   async getFlightSeats(@Param('id') id: string) {
     return await this.flightSeatService.getFlightSeatsByFlightId(id);
+  }
+
+  @Get('flight-seats-flights')
+  async getFlightSeatsByFlights(@Query() dto: GetSeatsByFlightsDto) {
+    return await this.flightSeatService.getFlightSeatsByFlights(dto);
   }
 
   @Post('flight-seats-flight')

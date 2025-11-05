@@ -66,4 +66,13 @@ export class TicketController {
       success: true,
     });
   }
+
+  @Get('revenue-stats')
+  async getRevenueStats(@Req() req: Request, @Res() res: Response) {
+    const { result } = await this.ticketService.getRevenueStats(req);
+    return res.json({
+      result,
+      success: true,
+    });
+  }
 }

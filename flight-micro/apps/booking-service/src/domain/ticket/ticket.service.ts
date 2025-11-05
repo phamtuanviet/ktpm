@@ -149,6 +149,51 @@ export class TicketService {
     return { result };
   }
 
+  async getRevenueStats() {
+    const today = startOfDay(new Date());
+    const sevenDaysAgo = subDays(today, 6);
+    const tickets = await this.ticketRepository.findTicketsLast7Days();
+    const revenueMap: Record<string, number> = {};
+
+    for (let i = 0; i < 7; i++) {
+      const current = addDays(sevenDaysAgo, i);
+      current.setHours(current.getHours() + 7);
+      const date = current.toISOString().slice(0, 10);
+      revenueMap[date] = 0;
+    }
+
+    tickets.forEach((ticket) => {
+      const date = new Date(ticket.bookedAt);
+      date.setHours(date.getHours() + 7);
+      const dateKey = date.toISOString().slice(0, 10);
+      const price = ticket.flightSeat.price;
+      const scale =
+        ticket?.passenger?.passengerType === 'ADULT'
+          ? 1
+          : ticket?.passenger?.passengerType === 'CHILD'
+            ? 0.8
+            : 1;
+      const revenue = price * scale;
+
+      if (revenueMap[dateKey] !== undefined) {
+        revenueMap[dateKey] += revenue;
+      }
+    });
+
+    const result = Object.entries(revenueMap)
+      .sort((a, b) => new Date(a[0]).getTime() - new Date(b[0]).getTime())
+      .map(([isoDate, total]) => {
+        const dateObj = new Date(isoDate);
+        const day = dateObj.getDate();
+        const month = dateObj.getMonth() + 1;
+        const year = dateObj.getFullYear();
+        const formattedDate = `${day}/${month}/${year}`;
+        return { date: formattedDate, total };
+      });
+
+    return { result };
+  }
+
   async searchTicketForClient(query: string) {
     const tickets =
       await this.ticketRepository.getTicketByEmailOrBookingReference(query);

@@ -100,9 +100,11 @@ model Ticket {
   // Audit fields
   bookedAt          DateTime        @default(now()) 
   cancelAt        DateTime?
-  @@index([flightSeatId])
-  @@index([passengerId])
-  @@index([bookingReference])
-  @@index([cancelCode])
-  @@index([seatNumber])
+  @@index([flightSeatId,isCancelled])
+  @@index([passengerId,isCancelled])
+  @@index([bookingReference,isCancelled])
+  @@index([cancelCode,isCancelled])
+  @@index([seatNumber,isCancelled])
+  @@index([bookedAt,isCancelled])
+  @@index([cancelAt,isCancelled])
 }

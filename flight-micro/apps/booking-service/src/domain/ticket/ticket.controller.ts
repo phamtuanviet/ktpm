@@ -38,4 +38,9 @@ export class TicketController {
   async countTicketsStats() {
     return this.ticketService.countTicketStats();
   }
+
+  @Get('revenue-stats')
+  async getRevenueStats() {
+    return this.ticketService.getRevenueStats();
+  }
 }

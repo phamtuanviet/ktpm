@@ -4,6 +4,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { FlightSeatRepository } from './flightSeat.repository';
 import { SeatClass } from 'generated/prisma';
 import { CreateFlightSeatsForFlightDto } from './dto/createFlighSeatForFlight.dto';
+import { GetSeatsByFlightsDto } from './dto/getSeatsByFlights.dto';
 
 @Injectable()
 export class FlightSeatService {
@@ -82,6 +83,11 @@ export class FlightSeatService {
       return createdSeats;
     });
 
+    return { seats };
+  }
+
+  async getFlightSeatsByFlights(dto: GetSeatsByFlightsDto) {
+    const seats = await this.flightSeatRepository.getSeatsByFlightIds(dto.ids);
     return { seats };
   }
 }

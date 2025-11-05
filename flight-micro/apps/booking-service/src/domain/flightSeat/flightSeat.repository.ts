@@ -88,4 +88,12 @@ export class FlightSeatRepository {
       },
     });
   }
+
+  getSeatsByFlightIds(flightIds: string[]) {
+    return this.prismaService.flightSeat.findMany({
+      where: {
+        flightId: { in: flightIds },
+      },
+    });
+  }
 }

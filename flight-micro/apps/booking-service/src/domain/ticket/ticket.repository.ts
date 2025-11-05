@@ -213,10 +213,11 @@ export class TicketRepository {
           gte: sevenDaysAgo,
           lt: tomorrow,
         },
+        isCancel: false,
       },
-      select: {
-        bookedAt: true,
-        isCancelled: true,
+      include: {
+        flightSeat: true,
+        passenger: true,
       },
     });
   }
