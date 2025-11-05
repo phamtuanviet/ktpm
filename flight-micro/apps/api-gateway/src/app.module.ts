@@ -6,6 +6,7 @@ import { AuthModule } from './domains/auth/auth.module';
 import { NewsModule } from './domains/news/news.module';
 import { UserModule } from './domains/user/user.module';
 import { TestModule } from './test/test.module';
+import { AircraftModule } from './domains/aircraft/aircraft.module';
 
 @Module({
   imports: [
@@ -20,7 +21,7 @@ import { TestModule } from './test/test.module';
     AuthModule,
     NewsModule,
     UserModule,
-    TestModule
+    AircraftModule,
   ],
   controllers: [],
   providers: [AppService],
