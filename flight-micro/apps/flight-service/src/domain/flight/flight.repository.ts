@@ -241,11 +241,11 @@ export class FlightRepository {
         id,
         status: { in: statuses },
         sagaStatus: SagaStatus.CONFIRMED,
-        include: {
-          departureAirport: true,
-          arrivalAirport: true,
-          aircraft: true,
-        },
+      },
+      include: {
+        departureAirport: true,
+        arrivalAirport: true,
+        aircraft: true,
       },
     });
   }
@@ -255,7 +255,7 @@ export class FlightRepository {
     const { id, ...rest } = data;
     return db.flight.update({
       where: { id, sagaStatus: SagaStatus.CONFIRMED },
-      rest,
+      data: { ...rest },
       include: {
         departureAirport: true,
         arrivalAirport: true,
@@ -298,16 +298,16 @@ export class FlightRepository {
       where: {
         id: { in: ids },
         sagaStatus: SagaStatus.CONFIRMED,
-        includes: {
-          aircraft: {
-            select: { name: true },
-          },
-          departureAirport: {
-            select: { name: true, iataCode: true, icaoCode: true },
-          },
-          arrivalAirport: {
-            select: { name: true, iataCode: true, icaoCode: true },
-          },
+      },
+      include: {
+        aircraft: {
+          select: { name: true },
+        },
+        departureAirport: {
+          select: { name: true, iataCode: true, icaoCode: true },
+        },
+        arrivalAirport: {
+          select: { name: true, iataCode: true, icaoCode: true },
         },
       },
     });

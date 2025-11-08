@@ -19,6 +19,7 @@ export class BookingController {
   @Post('booking-verify')
   async bookingVerify(@Req() req: Request, @Res() res: Response) {
     const { tickets } = await this.bookingService.bookingVerify(req);
+    
     return res.json({
       tickets,
       message: 'Booking verified successfully',

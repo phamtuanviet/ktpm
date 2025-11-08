@@ -1,10 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Controller, Injectable, Logger } from '@nestjs/common';
 import { FlightRepository } from './flight.repository';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RedisService } from 'src/redis/redis.service';
 import { EventPattern } from '@nestjs/microservices';
 
-@Injectable()
+@Controller()
 export class FlightSagaHandler {
   constructor(
     private readonly flightRepository: FlightRepository,

@@ -7,5 +7,6 @@ import { PassengerService } from './passenger.service';
   imports: [],
   controllers: [PassengerController],
   providers: [PassengerService, PassengerRepository],
+  exports: [PassengerService],
 })
 export class PassengerModule {}

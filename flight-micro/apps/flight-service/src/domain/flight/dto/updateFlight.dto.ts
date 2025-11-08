@@ -9,9 +9,6 @@ import {
 import { CreateFlightSeatDto } from './flightSeat.dto';
 
 export class UpdateFlightDto {
-  @IsString()
-  id: string;
-
   @IsOptional()
   @Type(() => Date)
   @IsDate()

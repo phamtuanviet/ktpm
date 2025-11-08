@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { SearchAircraftDto } from './dto/searchAircarft.dto';
-import { Prisma } from '@prisma/client';
 import { FilterAircraftDto } from './dto/filterAircraft.dto';
 import { UpdateAircraftDto } from './dto/updateAircraft.dto';
 import { CreateAircraftDto } from './dto/createAircraft.dto';
+import { Prisma } from 'generated/prisma';
 
 @Injectable()
 export class AircraftRepository {
@@ -35,6 +35,15 @@ export class AircraftRepository {
     });
   }
 
+  searchAircraftByName(q: string, tx?: any) {
+    const db = tx ?? this.prismaService;
+    return db.aircraft.findFirst({
+      where: {
+        OR: [{ name: { contains: q } }],
+      },
+    });
+  }
+
   async getAircraftsBysearch(dto: SearchAircraftDto) {
     const { page, pageSize, sortBy, sortOrder, query } = dto;
     const pageNum = page && page > 0 ? page : 1;
@@ -44,9 +53,9 @@ export class AircraftRepository {
     const searchCondition: any = {};
     if (query) {
       searchCondition.OR = [
-        { id: { startsWith: query } },
-        { name: { startsWith: query } },
-        { manufacturer: { startsWith: query } },
+        { id: { startsWith: query, mode: 'insensitive' } },
+        { name: { startsWith: query, mode: 'insensitive' } },
+        { manufacturer: { startsWith: query, mode: 'insensitive' } },
       ];
     }
     const orderByOption: Prisma.AircraftOrderByWithRelationInput = sortBy
@@ -130,8 +139,8 @@ export class AircraftRepository {
     });
   }
 
-  updateAircraft(dto: UpdateAircraftDto, tx?: any) {
-    const { id, ...updateData } = dto;
+  updateAircraft(id: string, dto: UpdateAircraftDto, tx?: any) {
+    const { ...updateData } = dto;
     const db = tx ?? this.prismaService;
     return db.aircraft.update({
       where: {

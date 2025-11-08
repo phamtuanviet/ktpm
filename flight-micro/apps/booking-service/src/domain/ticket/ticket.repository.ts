@@ -38,19 +38,26 @@ export class TicketRepository {
 
   createTicket(
     passengerId: string,
-    flighSeatId: string,
+    flightSeatId: string,
     cancelCode: string,
     bookingReference: string,
     seatNumber?: string,
     tx?: any,
   ) {
+    console.log(passengerId, flightSeatId, cancelCode, bookingReference);
     const db = tx ?? this.prismaService;
     return db.ticket.create({
-      passengerId,
-      flighSeatId,
-      cancelCode,
-      bookingReference,
-      seatNumber,
+      data: {
+        passenger: { connect: { id: passengerId } },
+        flightSeat: { connect: { id: flightSeatId } },
+        cancelCode,
+        bookingReference,
+        seatNumber,
+      },
+      include: {
+        flightSeat: true,
+        passenger: true,
+      }
     });
   }
 
@@ -181,7 +188,7 @@ export class TicketRepository {
     }
 
     const [tickets, totalTickets] = await this.prismaService.$transaction([
-      this.prismaService.tickets.findMany({
+      this.prismaService.ticket.findMany({
         where: searchCondition,
         include: {
           flightSeat: true,
@@ -191,7 +198,7 @@ export class TicketRepository {
         take: pageSize,
         orderBy: orderByOption,
       }),
-      this.prismaService.tickets.count({ where: searchCondition }),
+      this.prismaService.ticket.count({ where: searchCondition }),
     ]);
 
     return {
@@ -229,13 +236,13 @@ export class TicketRepository {
           {
             passenger: {
               email: {
-                startAt: query,
+                startsWith: query,
               },
             },
           },
           {
             bookingReference: {
-              startAt: query,
+              startsWith: query,
             },
           },
         ],

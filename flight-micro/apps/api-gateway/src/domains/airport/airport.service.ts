@@ -1,13 +1,13 @@
 import { Injectable, Req } from '@nestjs/common';
 import { ProxyService } from 'src/proxy/proxy.service';
 import type { Request } from 'express';
-import { SERVICES } from 'dist/config/services.config';
+import { SERVICES } from 'src/config/services.config';
 
 @Injectable()
 export class AirportService {
   constructor(private readonly proxyService: ProxyService) {}
 
-  private readonly baseUrl = SERVICES.FLIGHT_SERVICE + 'api/airport';
+  private readonly baseUrl = SERVICES.FLIGHT_SERVICE + '/api/airport';
 
   async getAirportsForClient(@Req() req: Request) {
     return this.proxyService.forward(

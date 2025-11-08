@@ -6,6 +6,7 @@ import { ConfigModule } from '@nestjs/config';
 import { TicketModule } from './domain/ticket/ticket.module';
 import { PassengerModule } from './domain/passenger/passenger.module';
 import { FlightSeatModule } from './domain/flightSeat/flightSeat.module';
+import { BookingModule } from './domain/booking/booking.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { FlightSeatModule } from './domain/flightSeat/flightSeat.module';
     TicketModule,
     PassengerModule,
     FlightSeatModule,
+    BookingModule,
   ],
   controllers: [],
 })

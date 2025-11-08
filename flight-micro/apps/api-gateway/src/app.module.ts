@@ -5,8 +5,12 @@ import * as redisStore from 'cache-manager-ioredis';
 import { AuthModule } from './domains/auth/auth.module';
 import { NewsModule } from './domains/news/news.module';
 import { UserModule } from './domains/user/user.module';
-import { TestModule } from './test/test.module';
 import { AircraftModule } from './domains/aircraft/aircraft.module';
+import { ProxyModule } from './proxy/proxy.module';
+import { BookingModule } from './domains/booking/booking.module';
+import { FlightModule } from './domains/flight/flight.module';
+import { AirportModule } from './domains/airport/airport.module';
+import { TicketModule } from './domains/ticket/ticket.module';
 
 @Module({
   imports: [
@@ -18,10 +22,16 @@ import { AircraftModule } from './domains/aircraft/aircraft.module';
         ttl: 60,
       }),
     }),
+    ProxyModule,
     AuthModule,
     NewsModule,
     UserModule,
     AircraftModule,
+    BookingModule,
+    FlightModule,
+    AircraftModule,
+    AirportModule,
+    TicketModule,
   ],
   controllers: [],
   providers: [AppService],

@@ -10,11 +10,6 @@ import { DeleteAircraftDto } from './dto/deleteAircraft.dto';
 export class AircraftController {
   constructor(private readonly aircraftService: AircraftService) {}
 
-  @Get(':id')
-  async getAircraft(@Param('id') id: string) {
-    return await this.aircraftService.getAircraftById(id);
-  }
-
   @Get('aircrafts-flight-admin/:q')
   //search-aircraft-flight/:q
   async getAircraftInFlight(@Param('q') q: string) {
@@ -24,6 +19,7 @@ export class AircraftController {
   @Get('aircrafts-admin')
   ///get-aircrafts-by-search
   async getAircraftsForAdmin(@Query() query: SearchAircraftDto) {
+    console.log(query);
     return await this.aircraftService.getAircraftsForAdmin(query);
   }
 
@@ -33,14 +29,20 @@ export class AircraftController {
     return await this.aircraftService.getAircraftsByFilterForAdmin(query);
   }
 
+  @Get('count')
+  // /count-aircrafts
+  async countAircrafts() {
+    return await this.aircraftService.countAircrafts();
+  }
+
+  @Get(':id')
+  async getAircraft(@Param('id') id: string) {
+    return await this.aircraftService.getAircraftById(id);
+  }
+
   @Post('')
   async createAircraft(@Body() createAircraftDto: CreateAircraftDto) {
     return await this.aircraftService.createAircraft(createAircraftDto);
-  }
-
-  @Put('')
-  async updateAircraft(@Body() dto: UpdateAircraftDto) {
-    return await this.aircraftService.updateAircraft(dto);
   }
 
   @Put('delete')
@@ -48,9 +50,11 @@ export class AircraftController {
     return await this.aircraftService.deleteAircraft(dto.id);
   }
 
-  @Get('count')
-  // /count-aircrafts
-  async countAircrafts() {
-    return await this.aircraftService.countAircrafts();
+  @Put(':id')
+  async updateAircraft(
+    @Body() dto: UpdateAircraftDto,
+    @Param('id') id: string,
+  ) {
+    return await this.aircraftService.updateAircraft(id, dto);
   }
 }

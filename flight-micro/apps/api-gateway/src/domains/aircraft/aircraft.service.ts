@@ -1,12 +1,12 @@
 import { Injectable, Req } from '@nestjs/common';
-import { SERVICES } from 'dist/config/services.config';
 import { ProxyService } from 'src/proxy/proxy.service';
 import type { Request } from 'express';
+import { SERVICES } from 'src/config/services.config';
 
 @Injectable()
 export class AircraftService {
   constructor(private readonly proxyService: ProxyService) {}
-  private readonly aircraftPort = SERVICES.FLIGHT_SERVICE + 'api/aircraft';
+  private readonly aircraftPort = SERVICES.FLIGHT_SERVICE + '/api/aircraft';
 
   async getAircraftById(@Req() req: Request) {
     return await this.proxyService.forward(
@@ -41,7 +41,10 @@ export class AircraftService {
   }
 
   async updateAircraft(@Req() req: Request) {
-    return await this.proxyService.forward(req, `${this.aircraftPort}`);
+    return await this.proxyService.forward(
+      req,
+      `${this.aircraftPort}/${req.params.id}`,
+    );
   }
 
   async deleteAircraft(@Req() req: Request) {

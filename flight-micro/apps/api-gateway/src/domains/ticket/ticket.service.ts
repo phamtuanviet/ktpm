@@ -1,8 +1,8 @@
 import { Injectable, Req } from '@nestjs/common';
 import { ProxyService } from 'src/proxy/proxy.service';
 import type { Request } from 'express';
-import { SERVICES } from 'dist/config/services.config';
 import { HttpService } from '@nestjs/axios';
+import { SERVICES } from 'src/config/services.config';
 
 @Injectable()
 export class TicketService {
@@ -28,7 +28,16 @@ export class TicketService {
     const { flights } = (
       await this.httpService.axiosRef.get(
         `${this.FLIGHT_URL}/flights-tickets-admin/`,
-        { params: { ids: flightIds } },
+        {
+          params: { ids: flightIds },
+          paramsSerializer: (params) => {
+            return Object.keys(params)
+              .map((key) =>
+                params[key].map((v: string) => `${key}=${v}`).join('&'),
+              )
+              .join('&');
+          },
+        },
       )
     ).data;
 
@@ -53,7 +62,16 @@ export class TicketService {
     const { flights } = (
       await this.httpService.axiosRef.get(
         `${this.FLIGHT_URL}/flights-tickets-admin/`,
-        { params: { ids: flightIds } },
+        {
+          params: { ids: flightIds },
+          paramsSerializer: (params) => {
+            return Object.keys(params)
+              .map((key) =>
+                params[key].map((v: string) => `${key}=${v}`).join('&'),
+              )
+              .join('&');
+          },
+        },
       )
     ).data;
 
@@ -102,7 +120,16 @@ export class TicketService {
     const { flights } = (
       await this.httpService.axiosRef.get(
         `${this.FLIGHT_URL}/flights-tickets-admin/`,
-        { params: { ids: flightIds } },
+        {
+          params: { ids: flightIds },
+          paramsSerializer: (params) => {
+            return Object.keys(params)
+              .map((key) =>
+                params[key].map((v: string) => `${key}=${v}`).join('&'),
+              )
+              .join('&');
+          },
+        },
       )
     ).data;
 

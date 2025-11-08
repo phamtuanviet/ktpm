@@ -30,13 +30,13 @@ export class FlightSeatService {
     seatType: SeatClass,
     tx?: any,
   ) {
-    const flightSeats =
+    const flightSeat =
       await this.flightSeatRepository.findFlightSeatBySeatClassAndFlight(
         id,
         seatType,
         tx,
       );
-    return { flightSeats };
+    return { flightSeat };
   }
 
   async updateBookedSeats(id: string, quantity: number, tx?: any) {
@@ -71,7 +71,7 @@ export class FlightSeatService {
     const seats = await this.prismaService.$transaction(async (tx) => {
       const createdSeats = await Promise.all(
         dto.seats.map((seat) =>
-          this.flightSeatRepository.createFlightSeat(
+          this.flightSeatRepository.updateFlightSeat(
             dto.flightId,
             seat.seatClass,
             seat.totalSeats,

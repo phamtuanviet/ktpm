@@ -9,19 +9,19 @@ export class AirportController {
   @Get('airports-client/:q')
   ///search-airports
   async getAirportsForClient(@Req() req: Request, @Res() res: Response) {
-    const { aircrafts } = await this.airportService.getAirportsForClient(req);
+    const { airports } = await this.airportService.getAirportsForClient(req);
     return res.json({
-      aircrafts,
+      airports,
       sucess: true,
     });
   }
 
   @Get('airports-flight-admin/:q')
   async getAirportsInFlightForAdmin(@Req() req: Request, @Res() res: Response) {
-    const { aircrafts } =
+    const { airports } =
       await this.airportService.getAirportsInFlightForAdmin(req);
     return res.json({
-      aircrafts,
+      airports,
       sucess: true,
     });
   }

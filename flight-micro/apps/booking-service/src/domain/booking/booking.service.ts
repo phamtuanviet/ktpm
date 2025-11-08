@@ -20,6 +20,11 @@ export class BookingService {
     @Inject('email-queue') private readonly emailQueue: ClientProxy,
   ) {}
 
+  safeMapTicket(ticket: any) {
+    const { cancelCode, ...rest } = ticket;
+    return rest;
+  }
+
   async signBuyTickets(email: string) {
     const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -42,7 +47,8 @@ export class BookingService {
     const isOtpValid = await this.redisService.get(
       `email-verification-buy-tickets:${email}`,
     );
-    if (isOtpValid === otp) {
+    if (isOtpValid == otp) {
+      await this.redisService.del(`email-verification-buy-tickets:${email}`);
       return true;
     } else {
       return false;
@@ -62,19 +68,21 @@ export class BookingService {
     const nums = passengers.filter((p) => p.passengerType !== 'INFANT').length;
     const isOtpValid = await this.verifyBuyTickets(email, otp);
     if (isOtpValid) {
-      const data = this.prismaService.$transaction(async (tx) => {
+      const data = await this.prismaService.$transaction(async (tx) => {
         const passengerRecords = await Promise.all(
           passengers.map((passenger) => {
             return this.passengerService.createPassenger(passenger, tx);
           }),
         );
 
-        const { flightSeats: outBoundFlightSeat } =
+        const { flightSeat: outBoundFlightSeat } =
           await this.flightSeatService.getFlightSeatsByFlightIdAndSeatType(
             outBoundFlightId,
             outBoundSeatClass,
             tx,
           );
+
+        console.log(outBoundFlightSeat);
 
         if (
           outBoundFlightSeat.totalSeats <
@@ -87,7 +95,7 @@ export class BookingService {
 
         const outTicketRecords = await Promise.all(
           passengerRecords.map((passenger, index) => {
-            const prefix = outBoundFlightSeat.seatClass.charAt(0).toUpperCase();
+            const prefix = outBoundFlightSeat.seatClass.charAt(0);
             const number = outBoundFlightSeat.bookedSeats + index + 1;
             let seatNumber = prefix + number;
             if (passenger.passengerType === 'INFANT') {
@@ -95,12 +103,13 @@ export class BookingService {
             }
             return this.ticketService.createTicket(
               passenger.id,
-              outBoundSeatClass,
+              outBoundFlightSeat.id,
               seatNumber,
               tx,
             );
           }),
         );
+        console.log(outTicketRecords);
         ticketRecords.push(...outTicketRecords);
         await this.flightSeatService.updateBookedSeats(
           outBoundFlightSeat.id,
@@ -109,7 +118,7 @@ export class BookingService {
         );
 
         if (inBoundFlightId && inBoundSeatClass) {
-          const { flightSeats: inBoundFlightSeat } =
+          const { flightSeat: inBoundFlightSeat } =
             await this.flightSeatService.getFlightSeatsByFlightIdAndSeatType(
               inBoundFlightId,
               inBoundSeatClass,
@@ -125,17 +134,15 @@ export class BookingService {
 
           const inTicketRecords = await Promise.all(
             passengerRecords.map((passenger, index) => {
-              const prefix = inBoundFlightSeat.seatClass
-                .charAt(0)
-                .toUpperCase();
+              const prefix = inBoundFlightSeat.seatClass.charAt(0);
               const number = inBoundFlightSeat.bookedSeats + index + 1;
               let seatNumber = prefix + number;
-              if (passenger.passengerType === 'INFANT') {
+              if (passenger.passengerType == 'INFANT') {
                 seatNumber = null;
               }
               return this.ticketService.createTicket(
                 passenger.id,
-                inBoundSeatClass,
+                inBoundFlightSeat.id,
                 seatNumber,
                 tx,
               );
@@ -149,15 +156,26 @@ export class BookingService {
           );
         }
 
+        const flightDataEmail = {
+          departureAirport: dto.departureAirport,
+          arrivalAirport: dto.arrivalAirport,
+          outBoundFlightNumber: dto.outBoundFlightNumber,
+          inBoundFlightNumber: dto.inBoundFlightNumber,
+          outBoundFlightId,
+          inBoundFlightId,
+        };
+
         this.emailQueue.emit('send-booking-confirmation', {
           email,
           tickets: ticketRecords,
+          flightDataEmail,
         });
 
-        return {
-          tickets: ticketRecords,
-        };
+        const safeTickets = ticketRecords.map((t) => this.safeMapTicket(t));
+
+        return safeTickets;
       });
+      return { tickets: data };
     } else {
       throw new HttpException('Invalid OTP Booking', 400);
     }

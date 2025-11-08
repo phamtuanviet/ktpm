@@ -22,6 +22,15 @@ export class CreateBookingDto {
   outBoundSeatClass: SeatClass;
 
   @IsString()
+  departureAirport: string;
+
+  @IsString()
+  arrivalAirport: string;
+
+  @IsString()
+  outBoundFlightNumber: string;
+
+  @IsString()
   otp: string;
 
   @IsOptional()
@@ -31,4 +40,8 @@ export class CreateBookingDto {
   @IsOptional()
   @IsEnum(SeatClass)
   inBoundSeatClass?: SeatClass;
+
+  @IsString()
+  @IsOptional()
+  inBoundFlightNumber?: string;
 }

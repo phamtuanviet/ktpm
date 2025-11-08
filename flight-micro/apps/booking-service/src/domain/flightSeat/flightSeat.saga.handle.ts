@@ -1,10 +1,10 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Controller, Inject } from '@nestjs/common';
 import { FlightSeatService } from './flightSeat.service';
 import { FlightSeatRepository } from './flightSeat.repository';
 import { ClientProxy, EventPattern } from '@nestjs/microservices';
 import { CreateFlightSeatsForFlightDto } from './dto/createFlighSeatForFlight.dto';
 
-@Injectable()
+@Controller()
 export class FlightSeatSagaHandle {
   constructor(
     private readonly flightSeatService: FlightSeatService,
@@ -28,9 +28,10 @@ export class FlightSeatSagaHandle {
   @EventPattern('seats.update')
   async handleUpdateSeat(data: CreateFlightSeatsForFlightDto) {
     try {
+      console.log('Updating flight seats:', data);
       const { seats } =
         await this.flightSeatService.updateFlightSeatsForFlight(data);
-      this.flightBookingQueue.emit('flight.updated.sucess', data.flightId);
+      this.flightBookingQueue.emit('flight.update.success', data.flightId);
     } catch (error) {
       console.error('Error updating flight seats:', error);
       this.flightBookingQueue.emit('flight.update.failed', data.flightId);

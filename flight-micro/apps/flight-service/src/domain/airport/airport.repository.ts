@@ -12,10 +12,10 @@ export class AirportRepository {
     const searchCondition: any = {};
 
     searchCondition.OR = [
-      { name: { startWith: query } },
-      { city: { startWith: query } },
-      { iataCode: { startWith: query } },
-      { icaoCode: { startWith: query } },
+      { name: { startsWith: query, mode: 'insensitive' } },
+      { city: { startsWith: query, mode: 'insensitive' } },
+      { iataCode: { startsWith: query, mode: 'insensitive' } },
+      { icaoCode: { startsWith: query, mode: 'insensitive' } },
     ];
     return this.prismaService.airport.findMany({
       where: searchCondition,

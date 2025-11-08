@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { AircraftRepository } from './aircarf.repository';
+import { AircraftRepository } from './aircraft.repository';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { SearchAircraftDto } from './dto/searchAircarft.dto';
 import { FilterAircraftDto } from './dto/filterAircraft.dto';
@@ -14,22 +14,23 @@ export class AircraftService {
   ) {}
 
   async getAircraftByName(query: string, tx?: any) {
-    return await this.aircraftRepository.searchAircraftsByName(query, tx);
+    return await this.aircraftRepository.searchAircraftByName(query, tx);
   }
 
   async getAircraftById(id: string, tx?: any) {
-    const aircarf = await this.aircraftRepository.getAircraftById(id, tx);
-    return { aircarf };
+    const aircraft = await this.aircraftRepository.getAircraftById(id, tx);
+    return { aircraft };
   }
 
   async getAircraftsInFlight(q: string) {
-    const aircarfs = await this.aircraftRepository.searchAircraftsByName(q);
-    return { aircarfs };
+    const aircrafts = await this.aircraftRepository.searchAircraftsByName(q);
+    return { aircrafts };
   }
 
   async getAircraftsForAdmin(query: SearchAircraftDto) {
     const { aircrafts, totalPages, currentPage } =
       await this.aircraftRepository.getAircraftsBysearch(query);
+    return { aircrafts, totalPages, currentPage };
   }
 
   async getAircraftsByFilterForAdmin(query: FilterAircraftDto) {
@@ -39,11 +40,12 @@ export class AircraftService {
   }
 
   async createAircraft(dto: CreateAircraftDto) {
-    return await this.aircraftRepository.createAircraft(dto);
+    const aircraft = await this.aircraftRepository.createAircraft(dto);
+    return { aircraft };
   }
 
-  async updateAircraft(dto: UpdateAircraftDto) {
-    return await this.aircraftRepository.updateAircraft(dto);
+  async updateAircraft(id: string, dto: UpdateAircraftDto) {
+    return await this.aircraftRepository.updateAircraft(id, dto);
   }
 
   async deleteAircraft(id: string) {

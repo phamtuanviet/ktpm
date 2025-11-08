@@ -2,7 +2,6 @@ import { HttpException, Inject, Injectable } from '@nestjs/common';
 import { TicketRepository } from './ticket.repository';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ClientProxy } from '@nestjs/microservices';
-import { nanoid } from 'nanoid';
 import { FlightSeat } from 'generated/prisma';
 import { FilterTicketDto } from './dto/filterTicket.dto';
 import { SearchTicketDto } from './dto/searchTicket.dto';
@@ -38,6 +37,7 @@ export class TicketService {
     let attempt = 0;
     const length = 8;
     const maxRetries = 5;
+    const { nanoid } = await import('nanoid');
 
     do {
       if (attempt++ >= maxRetries) {
@@ -89,9 +89,7 @@ export class TicketService {
       bookingReference,
     });
 
-    const safeTicket = this.safeMapTicket(ticket);
-
-    return { ticket: safeTicket };
+    return ticket;
   }
 
   async cancelTicket(ticketId: string, cancelCode: string, tx?: any) {

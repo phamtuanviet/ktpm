@@ -6,15 +6,6 @@ import type { Request, Response } from 'express';
 export class AircraftController {
   constructor(private readonly aircraftService: AircraftService) {}
 
-  @Get(':id')
-  async getAircraft(@Req() req: Request, @Res() res: Response) {
-    const { aircraft } = await this.aircraftService.getAircraftById(req);
-    return res.json({
-      aircraft,
-      success: true,
-    });
-  }
-
   @Get('aircrafts-flight-admin/:q')
   async getAircraftsFlightAdmin(@Req() req: Request, @Res() res: Response) {
     const { aircrafts } =
@@ -63,7 +54,7 @@ export class AircraftController {
     });
   }
 
-  @Put('')
+  @Put('/:id')
   async updateAircraft(@Req() req: Request, @Res() res: Response) {
     const { aircraft } = await this.aircraftService.updateAircraft(req);
     return res.json({
@@ -88,6 +79,17 @@ export class AircraftController {
     const { count } = await this.aircraftService.countAircrafts(req);
     return res.json({
       count,
+      success: true,
+    });
+  }
+
+  @Get(':id')
+  async getAircraft(@Req() req: Request, @Res() res: Response) {
+    const { aircraft } = await this.aircraftService.getAircraftById(req);
+    console.log(aircraft);
+
+    return res.json({
+      aircraft,
       success: true,
     });
   }

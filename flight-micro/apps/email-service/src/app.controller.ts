@@ -14,8 +14,39 @@ export class AppController {
   }
 
   @EventPattern('send-verification-reset-password')
-  async handleResetPasswordEmail(@Payload() data: { email: string; code: string }) {
+  async handleResetPasswordEmail(
+    @Payload() data: { email: string; code: string },
+  ) {
     await this.appService.sendResetPasswordEmail(data.email, data.code);
   }
 
+  @EventPattern('send-otp-booking')
+  async handleSendOtpForBooking(
+    @Payload() data: { email: string; code: string },
+  ) {
+    await this.appService.sendOtpForBooking(data.email, data.code);
+  }
+
+  @EventPattern('send-booking-confirmation')
+  async handleBookingConfirmation(
+    @Payload()
+    data: {
+      email: string;
+      tickets: any[];
+      flightDataEmail: {
+        departureAirport: string;
+        arrivalAirport: string;
+        outBoundFlightNumber: string;
+        inBoundFlightNumber?: string;
+        outBoundFlightId: string;
+        inBoundFlightId?: string;
+      };
+    },
+  ) {
+    await this.appService.sendBookingConfirmation(
+      data.email,
+      data.tickets,
+      data.flightDataEmail,
+    );
+  }
 }

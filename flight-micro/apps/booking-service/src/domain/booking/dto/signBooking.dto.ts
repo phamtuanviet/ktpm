@@ -1,10 +1,5 @@
-import { Type } from 'class-transformer';
 import {
-  IsInt,
-  IsOptional,
   IsString,
-  IsIn,
-  Min,
   IsEmail,
   IsNotEmpty,
 } from 'class-validator';

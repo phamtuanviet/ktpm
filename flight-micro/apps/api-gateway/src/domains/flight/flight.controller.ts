@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Put, Req, Res } from '@nestjs/common';
-import { SERVICES } from 'dist/config/services.config';
 import { FlightService } from './flight.service';
 import type { Request, Response } from 'express';
+import { SERVICES } from 'src/config/services.config';
 
 @Controller('/api/flight')
 export class FlightController {
@@ -18,7 +18,7 @@ export class FlightController {
     });
   }
 
-  @Put('')
+  @Put('/:id')
   async updateFlight(@Req() req: Request, @Res() res: Response) {
     const { flight } = await this.flightService.updateFlight(req);
     return res.json({
@@ -48,15 +48,6 @@ export class FlightController {
       flights,
       totalPages,
       currentPage,
-      sucesss: true,
-    });
-  }
-
-  @Get(':id')
-  async getFlightById(@Req() req: Request, @Res() res: Response) {
-    const { flight } = await this.flightService.getFlightById(req);
-    return res.json({
-      flight,
       sucesss: true,
     });
   }
@@ -96,6 +87,15 @@ export class FlightController {
     const { count } = await this.flightService.countStatusFlights(req);
     return res.json({
       count,
+      sucesss: true,
+    });
+  }
+
+  @Get(':id')
+  async getFlightById(@Req() req: Request, @Res() res: Response) {
+    const { flight } = await this.flightService.getFlightById(req);
+    return res.json({
+      flight,
       sucesss: true,
     });
   }

@@ -5,7 +5,6 @@ import { ClientProxy } from '@nestjs/microservices';
 import { SearchFlightForUserDto } from './dto/searchFlightForUser.dto';
 import { AirportService } from '../airport/airport.service';
 import { AircraftService } from '../aircraft/aircraft.service';
-import { nanoid } from 'nanoid';
 import { CreateFlightDto } from './dto/createFlight.dto';
 import { UpdateFlightDto } from './dto/updateFlight.dto';
 import { SearchFlightDto } from './dto/searchFlight.dto';
@@ -111,6 +110,7 @@ export class FlightService {
           500,
         );
       }
+      const { nanoid } = await import('nanoid');
 
       code = nanoid(length).toUpperCase();
       const found = await this.flightRepository.findFlightByFlightNumber(
@@ -142,10 +142,12 @@ export class FlightService {
         data.departureAirport,
         tx,
       );
+
       const arrivalAirport = await this.airportService.getAirportByName(
         data.arrivalAirport,
         tx,
       );
+
       const aircraft = await this.aircraftService.getAircraftByName(
         data.aircraft,
         tx,
@@ -160,25 +162,28 @@ export class FlightService {
       }
 
       if (!data.flightNumber) {
-        data.flightNumber = await this.generateUniqueFlightNumber();
+        data.flightNumber = await this.generateUniqueFlightNumber(tx);
       }
 
       const existing = await this.flightRepository.findFlightByFlightNumber(
         data.flightNumber,
+        tx,
       );
       if (existing) {
         throw new HttpException('Flight already exists', 500);
       }
 
-      const createdFlight = await this.flightRepository.createFlight({
-        flightNumber: data.flightNumber,
-        departureTime: data.departureTime,
-        arrivalTime: data.arrivalTime,
-        aircraft: { connect: { id: aircraft.id } },
-        departureAirport: { connect: { id: departureAirport.id } },
-        arrivalAirport: { connect: { id: arrivalAirport.id } },
+      const createdFlight = await this.flightRepository.createFlight(
+        {
+          flightNumber: data.flightNumber,
+          departureTime: data.departureTime,
+          arrivalTime: data.arrivalTime,
+          aircraft: { connect: { id: aircraft.id } },
+          departureAirport: { connect: { id: departureAirport.id } },
+          arrivalAirport: { connect: { id: arrivalAirport.id } },
+        },
         tx,
-      });
+      );
 
       const sagaPayLoad = {
         flightId: createdFlight.id,
@@ -192,8 +197,9 @@ export class FlightService {
     return { flight };
   }
 
-  async updateFlight(data: UpdateFlightDto) {
-    const { estimatedDeparture, estimatedArrival, id } = data;
+  async updateFlight(id: string, data: UpdateFlightDto) {
+    const { estimatedDeparture, estimatedArrival } = data;
+
     const flight = await this.flightRepository.findFlightByIdAndStatus(id, [
       'DELAYED',
       'SCHEDULED',
@@ -209,9 +215,11 @@ export class FlightService {
       } else {
         await this.redisService.set(`flight-temp-${flight.id}`, flight);
         const dateValue = {
-          ...data,
+          estimatedDeparture,
+          estimatedArrival,
           sagaStatus: SagaStatus.PENDING,
           status: 'DELAYED',
+          id,
         };
         if (
           (estimatedDeparture < flight.departureTime &&
@@ -228,6 +236,14 @@ export class FlightService {
           dateValue,
           tx,
         );
+
+        const sagaPayLoad = {
+          flightId: id,
+          seats: data.seats,
+        };
+
+        this.flightBookingQueue.emit('seats.update', sagaPayLoad);
+
         return flightData;
       }
     });

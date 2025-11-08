@@ -29,7 +29,7 @@ export class FlightSeatRepository {
     tx?: any,
   ) {
     const data = tx ?? this.prismaService;
-    return data.flightSeat.findMany({
+    return data.flightSeat.findFirst({
       where: {
         flightId: flightId,
         seatClass: seatClass,

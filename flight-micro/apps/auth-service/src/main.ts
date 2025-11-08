@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import * as dotenv from 'dotenv';
 import { ValidationPipe } from '@nestjs/common/pipes/validation.pipe';
-import * as cookieParser from 'cookie-parser';
+import cookieParser from 'cookie-parser';
 
 dotenv.config();
 
@@ -16,7 +16,7 @@ async function bootstrap() {
       transform: true,
     }),
   );
-    app.use(cookieParser());
+  app.use(cookieParser());
 
   await app.listen(process.env.PORT ?? 5001);
 }

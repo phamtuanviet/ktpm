@@ -28,11 +28,6 @@ export class FlightController {
     return await this.flightService.getFlightsAdmin(query);
   }
 
-  @Get(':id')
-  async getFlightById(@Param('id') id: string) {
-    return await this.flightService.getFlightById(id);
-  }
-
   @Get('flights-filter-admin')
   async getFlightsFilterForAdmin(@Query() query: FilterFlightDto) {
     return await this.flightService.getFlightsFilterForAdmin(query);
@@ -48,9 +43,10 @@ export class FlightController {
     return await this.flightService.createFlight(createFlightDto);
   }
 
-  @Put('')
-  async updateFlight(@Body() dto: UpdateFlightDto) {
-    return await this.flightService.updateFlight(dto);
+  @Put('/:id')
+  async updateFlight(@Body() dto: UpdateFlightDto, @Param('id') id: string) {
+    console.log(id, dto);
+    return await this.flightService.updateFlight(id, dto);
   }
 
   @Get('count')
@@ -61,5 +57,10 @@ export class FlightController {
   @Get('count-status')
   async countStatusFlights() {
     return await this.flightService.countStatusFlights();
+  }
+
+  @Get(':id')
+  async getFlightById(@Param('id') id: string) {
+    return await this.flightService.getFlightById(id);
   }
 }

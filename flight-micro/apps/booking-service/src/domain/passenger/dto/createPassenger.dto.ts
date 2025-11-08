@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer';
 import {
   IsDate,
   IsEmail,
@@ -20,6 +21,7 @@ export class CreatePassengerDto {
   @IsOptional()
   passport: string;
 
+  @Type(() => Date)
   @IsDate({ message: 'Ngày sinh không hợp lệ' })
   dob: Date;
 
