@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Put, Query } from '@nestjs/common';
 import { UserService } from './user.service';
 import { SearchUsersDto } from './dto/searchUsers.dto';
 import { FilterUsersDto } from './dto/filterUsers.dto';
@@ -8,12 +8,7 @@ import { UpdateUserDto } from './dto/updateUsers.dto';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @Get('user/:id')
-  async getUserById(@Param('id') id: string) {
-    return await this.userService.getUserById(id);
-  }
-
-  @Get('search')
+  @Get('user-admin')
   async searchUsers(@Query() query: SearchUsersDto) {
     return await this.userService.searchUsers(query);
   }
@@ -23,13 +18,18 @@ export class UserController {
     return await this.userService.countUsers();
   }
 
-  @Get('filter-users')
+  @Get('user-filter-admin')
   async filterUsers(@Query() query: FilterUsersDto) {
     return await this.userService.filterUsers(query);
   }
 
-  @Post('update-user')
-  async updateUser(@Body() body: UpdateUserDto) {
-    return await this.userService.updateUser(body);
+  @Put('/:id')
+  async updateUser(@Body() body: UpdateUserDto, @Param('id') id: string) {
+    return await this.userService.updateUser(body, id);
+  }
+
+  @Get('/:id')
+  async getUserById(@Param('id') id: string) {
+    return await this.userService.getUserById(id);
   }
 }

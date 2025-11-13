@@ -88,9 +88,9 @@ export class AircraftRepository {
     const skip = (pageNum - 1) * pageSizeNum;
 
     const operatorMap = {
-      id: (val: string) => ({ equal: val }),
-      name: (val: string) => ({ startWith: val }),
-      manufacturer: (val: string) => ({ startWith: val }),
+      id: (val: string) => ({ startsWith: val }),
+      name: (val: string) => ({ startsWith: val }),
+      manufacturer: (val: string) => ({ startsWith: val }),
     };
 
     const where = Object.entries(filters)

@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   Post,
+  Put,
   Query,
   UploadedFile,
   UseInterceptors,
@@ -22,9 +23,9 @@ import { FilterNewsDto } from './dto/filterNews.dto';
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
-  @Post('create-news')
+  @Post('')
   @UseInterceptors(
-    FileInterceptor('thumbnailFile', { fileFilter: imageFileFilter }),
+    FileInterceptor('thumbnail', { fileFilter: imageFileFilter }),
   )
   async createNews(
     @Body() body: CreateNewsDto,
@@ -33,20 +34,36 @@ export class AppController {
     return await this.appService.createNews(body, thumbnailFile);
   }
 
-  @Post('update-news')
+  @Put('delete')
+  async deleteNews(@Body('id') id: string) {
+    return await this.appService.deleteNews(id);
+  }
+
+  @Put('/:id')
   @UseInterceptors(
-    FileInterceptor('thumbnailFile', { fileFilter: imageFileFilter }),
+    FileInterceptor('thumbnail', { fileFilter: imageFileFilter }),
   )
   async updateNews(
+    @Param('id') id: string,
     @Body() body: UpdateNewsDto,
     @UploadedFile() thumbnailFile?: Express.Multer.File,
   ) {
-    return await this.appService.updateNews(body, thumbnailFile);
+    return await this.appService.updateNews(id, body, thumbnailFile);
   }
 
-  @Post('delete-news')
-  async deleteNews(@Body('id') id: string) {
-    return await this.appService.deleteNews(id);
+  @Get('get-lastest')
+  async getLatestNews(@Query() pagination: PaginationDto) {
+    return await this.appService.getLatestNews(pagination);
+  }
+
+  @Get('news-admin')
+  async getNewsBySearch(@Query() query: SearchNewsDto) {
+    return await this.appService.getNewsBySearch(query);
+  }
+
+  @Get('news-filter-admin')
+  async getNewsByFilter(@Query() query: FilterNewsDto) {
+    return await this.appService.getNewsByFilter(query);
   }
 
   @Get('count-news')
@@ -54,23 +71,8 @@ export class AppController {
     return await this.appService.countNews();
   }
 
-  @Get('news/:id')
+  @Get('/:id')
   async getNewsById(@Param('id') id: string) {
     return await this.appService.getNewsById(id);
-  }
-
-  @Get('get-latest')
-  async getLatestNews(@Query() pagination: PaginationDto) {
-    return await this.appService.getLatestNews(pagination);
-  }
-
-  @Get('search')
-  async getNewsBySearch(@Query() query: SearchNewsDto) {
-    return await this.appService.getNewsBySearch(query);
-  }
-
-  @Get('filter')
-  async getNewsByFilter(@Query() query: FilterNewsDto) {
-    return await this.appService.getNewsByFilter(query);
   }
 }

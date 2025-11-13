@@ -7,9 +7,16 @@ import { FlightSeatModule } from '../flightSeat/flightSeat.module';
 import { TicketModule } from '../ticket/ticket.module';
 import { PassengerModule } from '../passenger/passenger.module';
 import { BookingService } from './booking.service';
+import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
+import { SharedRabbitModule } from 'src/rbmq/shared-rabbit.module';
 
 @Module({
-  imports: [FlightSeatModule, TicketModule, PassengerModule],
+  imports: [
+    FlightSeatModule,
+    TicketModule,
+    PassengerModule,
+    SharedRabbitModule,
+  ],
   controllers: [BookingController],
   providers: [BookingService],
 })

@@ -6,13 +6,24 @@ import {
   IsIn,
   IsEmail,
   IsBoolean,
+  IsEnum,
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
+import { PassengerType, SeatClass } from 'generated/prisma';
 
 export class FilterTicketDto {
   @IsOptional()
+  @IsEnum(SeatClass)
+  seatClass: SeatClass;
+
+  @IsOptional()
+  @IsEnum(PassengerType)
+  passengerType: PassengerType;
+
+  @IsOptional()
   @IsString()
-  flightId?: string;
+  passengerName: string;
+
 
   @IsOptional()
   @IsString()
@@ -21,7 +32,7 @@ export class FilterTicketDto {
   @IsOptional()
   @IsString()
   @IsEmail()
-  email?: string;
+  passengerEmail?: string;
 
   @IsOptional()
   @IsBoolean({ message: 'isCancel phải là boolean' })
@@ -30,7 +41,7 @@ export class FilterTicketDto {
     if (value === 'false') return false;
     return value;
   })
-  isCancel?: boolean;
+  isCancelled?: boolean;
 
   @IsOptional()
   @Type(() => Number)

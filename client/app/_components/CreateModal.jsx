@@ -46,7 +46,7 @@ const CreateModal = ({
       if (!result) {
         return;
       }
-      const { data } = result
+      const { data } = result;
       setSuggestions((s) => ({ ...s, [fieldName]: data }));
     } catch (err) {
       if (
@@ -71,6 +71,7 @@ const CreateModal = ({
           : type === "datetime-local"
           ? new Date(value)
           : value;
+
       const field = createFormFields.find((f) => f.name === name);
       if (field?.type === "flightNumber" && value) {
         handleAutocomplete(name, value, searchFlightsByQuery);

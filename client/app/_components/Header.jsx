@@ -23,7 +23,7 @@ import Swal from "sweetalert2";
 const Header = () => {
   const path = usePathname();
   const router = useRouter();
-  const { user } = useSelector((state) => state.auth);
+  const { isLogin, user } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const handleLogin = () => {
     // Điều hướng đến trang /auth với isLogin=true (đăng nhập)
@@ -50,10 +50,9 @@ const Header = () => {
       cancelButtonText: "Cancel",
     }).then((result) => {
       if (result.isConfirmed) {
-        dispatch(logoutUser());
+        dispatch(logoutUser({ id: user.id }));
         localStorage.removeItem("persist:root.auth");
         router.push("/");
-        console.log("Đã logout");
       }
     });
   };
@@ -84,7 +83,7 @@ const Header = () => {
                 Look Up
               </li>
             </Link>
-            {user && user?.isAccountVerified && (
+            {isLogin && (
               <Link href={"/your-flight"}>
                 <li
                   className={`hover:text-primary font-medium text-[1.25rem] cursor-pointer`}
@@ -102,7 +101,7 @@ const Header = () => {
             </Link>
           </ul>
         </div>
-        {(!user?.isAccountVerified || !user) && (
+        {!isLogin && (
           <div className="flex gap-2 items-center">
             <Button variant="outline" onClick={handleLogin}>
               Sign in
@@ -112,7 +111,7 @@ const Header = () => {
             </Button>
           </div>
         )}
-        {user?.isAccountVerified && (
+        {isLogin && (
           <div className="flex gap-2 items-center">
             <DropdownMenu>
               <DropdownMenuTrigger>
@@ -165,7 +164,7 @@ const Header = () => {
               Look Up
             </li>
           </Link>
-          {user && user?.isAccountVerified && (
+          {isLogin && (
             <Link href={"/your-flight"}>
               <li
                 className={`hover:text-primary font-medium text-[1.25rem] cursor-pointer`}

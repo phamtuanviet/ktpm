@@ -296,7 +296,7 @@ export const updateUsersFormFields = [
   },
   {
     label: "Account Verified",
-    name: "isAccountVerified",
+    name: "isVerified",
     type: "select",
     editable: true,
     required: true,
@@ -345,7 +345,7 @@ export const updateNewsFormFields = [
     label: "Created At",
     name: "createdAt",
     type: "datetime-local",
-    editable: true,
+    editable: false,
     required: false,
   },
   {
@@ -484,13 +484,7 @@ export const createNewsFormFields = [
     editable: true,
     required: false,
   },
-  {
-    label: "Created At",
-    name: "createdAt",
-    type: "datetime-local",
-    editable: true,
-    required: false,
-  },
+
   {
     labe: "Content",
     name: "content",
@@ -654,7 +648,7 @@ export const filterUsersFormFields = [
   },
   {
     label: "Account Verified",
-    name: "isAccountVerified",
+    name: "isVerified",
     type: "select",
     defaultValue: true,
     options: [
@@ -747,11 +741,6 @@ export const filterFlightFormFields = [
 
 export const filterTicketsFormFields = [
   {
-    name: "flightNumber",
-    label: "Flight Number",
-    type: "flightNumber",
-  },
-  {
     name: "seatClass",
     label: "Seat Class",
     type: "select",
@@ -815,7 +804,7 @@ export const sortUserFormFields = [
   },
   {
     label: "Account Verified",
-    value: "isAccountVerified",
+    value: "isVerified",
   },
 ];
 
@@ -889,14 +878,6 @@ export const sortNewsFormFields = [
 ];
 
 export const sortTicketFormFields = [
-  {
-    label: "User",
-    value: "bookedBy",
-  },
-  {
-    label: "Flight Number",
-    value: "flight",
-  },
   {
     label: "Flight Seat",
     value: "flightSeat",

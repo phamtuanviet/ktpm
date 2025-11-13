@@ -65,8 +65,10 @@ export class FlightSeatRepository {
     const data = tx ?? this.prismaService;
     return data.flightSeat.update({
       where: {
-        flightId: flightId,
-        seatClass: seatClass,
+        flightId_seatClass: {
+          flightId: flightId,
+          seatClass: seatClass,
+        },
       },
       data: {
         totalSeats: totalSeats,

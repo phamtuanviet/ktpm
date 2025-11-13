@@ -17,16 +17,21 @@ async function bootstrap() {
     }),
   );
 
-  app.connectMicroservice<MicroserviceOptions>({
-    transport: Transport.RMQ,
-    options: {
-      urls: [process.env.RABBITMQ_URL || 'amqp://guest:guest@localhost:5672'],
-      queue: 'flight-booking-queue',
-      queueOptions: { durable: true },
-    },
-  });
+  // app.connectMicroservice<MicroserviceOptions>({
+  //   transport: Transport.RMQ,
+  //   options: {
+  //     urls: [process.env.RABBITMQ_URL || 'amqp://guest:guest@localhost:5672'],
+  //     queue: 'flight-branch',
+  //     queueOptions: {
+  //       durable: true,
+  //     },
 
-  await app.startAllMicroservices();
+  //     exchange: 'flight-booking-exchange',
+  //     exchangeType: 'fanout',
+  //   },
+  // });
+
+  // await app.startAllMicroservices();
   await app.listen(process.env.PORT ?? 5003);
 }
 bootstrap();

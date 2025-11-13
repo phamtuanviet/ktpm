@@ -12,7 +12,7 @@ const page = () => {
   const fetchUser = async () => {
     try {
       const res = await userService.getUserById(currentId);
-      setUser(res?.userData || null);
+      setUser(res?.data.userData || null);
     } catch (error) {
       console.error("Error fetching news:", error);
       setUser(null);
@@ -24,7 +24,6 @@ const page = () => {
   useEffect(() => {
     setCurrentId(id);
   }, [id]);
-  console.log(user);
   return (
     <div className="min-h-screen w-full flex">
       <Sidebar type="big" />

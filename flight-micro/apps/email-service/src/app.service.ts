@@ -38,33 +38,37 @@ export class AppService {
     flightDataEmail: {
       departureAirport: string;
       arrivalAirport: string;
-      outBoundFlightNumber: string;
-      inBoundFlightNumber?: string;
-      outBoundFlightId: string;
-      inBoundFlightId?: string;
+      outboundFlightNumber: string;
+      inboundFlightNumber?: string;
+      outboundFlightId: string;
+      inboundFlightId?: string;
     },
   ) {
     const outboundTickets = ticket.filter(
-      (t) => t.flightSeat.flightId === flightDataEmail.outBoundFlightId,
+      (t) => t.flightSeat.flightId === flightDataEmail.outboundFlightId,
     );
-    const inboundTickets = flightDataEmail.inBoundFlightId
+    const inboundTickets = flightDataEmail.inboundFlightId
       ? ticket.filter(
-          (t) =>
-            t.flightSeat.flightId === flightDataEmail.inBoundFlightId,
+          (t) => t.flightSeat.flightId === flightDataEmail.inboundFlightId,
         )
       : [];
 
     const renderTickets = (tickets: any[]) =>
       tickets
-        .map(
-          (t) => `
+        .map((t) => {
+          const dob = t.passenger.dob
+            ? new Date(t.passenger.dob).toISOString().split('T')[0] // yyyy-MM-dd
+            : 'N/A';
+          return `
         <div style="border:1px solid #ddd;border-radius:10px;padding:15px;margin-bottom:10px;background-color:#fafafa;">
+          <p><strong>Tên khách hàng:</strong> ${t.passenger.fullName ?? 'Trẻ em đi kèm (INFANT)'}</p>
+          <p><strong>Ngày sinh:</strong>${dob}</p>
           <p><strong>Số ghế:</strong> ${t.seatNumber ?? 'Trẻ em đi kèm (INFANT)'}</p>
           <p><strong>Mã đặt chỗ (Booking Reference):</strong> ${t.bookingReference}</p>
           <p><strong>Mã hủy vé (Cancel Code):</strong> ${t.cancelCode}</p>
         </div>
-      `,
-        )
+      `;
+        })
         .join('');
 
     const htmlContent = `
@@ -76,7 +80,7 @@ export class AppService {
       <h3>✈️ Thông tin chuyến bay đi</h3>
       <p><strong>Từ:</strong> ${flightDataEmail.departureAirport}</p>
       <p><strong>Đến:</strong> ${flightDataEmail.arrivalAirport}</p>
-      <p><strong>Số hiệu chuyến bay:</strong> ${flightDataEmail.outBoundFlightNumber}</p>
+      <p><strong>Số hiệu chuyến bay:</strong> ${flightDataEmail.outboundFlightNumber}</p>
       ${renderTickets(outboundTickets)}
 
       ${
@@ -85,7 +89,7 @@ export class AppService {
         <h3>🛬 Thông tin chuyến bay về</h3>
         <p><strong>Từ:</strong> ${flightDataEmail.arrivalAirport}</p>
         <p><strong>Đến:</strong> ${flightDataEmail.departureAirport}</p>
-        <p><strong>Số hiệu chuyến bay:</strong> ${flightDataEmail.inBoundFlightNumber}</p>
+        <p><strong>Số hiệu chuyến bay:</strong> ${flightDataEmail.inboundFlightNumber}</p>
         ${renderTickets(inboundTickets)}
       `
           : ''

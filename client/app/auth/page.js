@@ -17,6 +17,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSelector, useDispatch } from "react-redux";
 import { useSearchParams } from "next/navigation";
+import { FcGoogle } from "react-icons/fc";
+
 import {
   loginUser,
   registerUser,
@@ -37,9 +39,11 @@ export default function AuthForm() {
     dispatch(setIsRegisteredFalse());
   }, [dispatch]);
 
-  const { user, isLoading, error, isAuthenticated, message ,isRegistered} = useSelector(
-    (state) => state.auth
-  );
+  const {
+    user,
+    isLogin: isAuthenticated,
+    message,
+  } = useSelector((state) => state.auth);
 
   // Schema validation
   const loginSchema = z.object({
@@ -70,21 +74,23 @@ export default function AuthForm() {
     router.push("/auth/forget-password");
   };
 
+  const handleGoogleLogin = () => {
+    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/oauth/google`;
+  };
+
   useEffect(() => {
-    if (isAuthenticated && isLogin) {
+    if (isAuthenticated) {
       toast.success(message);
+
       router.push("/");
-    } else if (user && isAuthenticated === false && isRegistered) {
-      dispatch(sendVerifyOtp({id :user.id}));
+    } else if (user && !isAuthenticated) {
+      dispatch(sendVerifyOtp({ id: user.id }));
       toast.success(message);
       router.push("/auth/verify?type=verify-email");
-    } 
-  }, [message]);
-  useEffect(() => {
-    if(error !== null){
-      toast.error(error);
+    } else {
+      toast.info(message);
     }
-  },[error])
+  }, [message]);
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100">
@@ -170,11 +176,15 @@ export default function AuthForm() {
 
                   {/* Nút Submit */}
                   <Button className="w-full" type="submit">
-                    {isLoading
-                      ? "Đang xử lý..."
-                      : isLogin
-                      ? "Login"
-                      : "Register"}
+                    {isLogin ? "Login" : "Register"}
+                  </Button>
+                  <Button
+                    type="button"
+                    className="w-full flex items-center justify-center gap-2 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                    onClick={handleGoogleLogin}
+                  >
+                    <FcGoogle size={20} />
+                    Continue with Google
                   </Button>
                 </form>
               </Form>

@@ -25,7 +25,6 @@ const Page = () => {
     setOtp(e.target.value);
     if (error) setError("");
   };
-  console.log(data);
 
   return (
     <>

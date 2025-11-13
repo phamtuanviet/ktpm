@@ -12,7 +12,4 @@ export class GoogleLoginDto {
 
   @IsNotEmpty({ message: 'Name không được để trống' })
   name: string;
-
-  @IsNotEmpty({ message: 'Device Info không được để trống' })
-  deviceInfo: string;
 }

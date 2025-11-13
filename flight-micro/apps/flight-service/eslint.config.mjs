@@ -40,6 +40,7 @@ export default tseslint.config(
           argsIgnorePattern: '^\_', // Cho phép các biến không dùng có tiền tố '_'
           varsIgnorePattern: '^\_',
           caughtErrorsIgnorePattern: '^\_',
+          ignoreRestSiblings: true,
         },
       ],
 

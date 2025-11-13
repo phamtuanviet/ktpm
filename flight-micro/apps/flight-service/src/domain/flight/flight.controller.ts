@@ -59,7 +59,7 @@ export class FlightController {
     return await this.flightService.countStatusFlights();
   }
 
-  @Get(':id')
+  @Get('/:id')
   async getFlightById(@Param('id') id: string) {
     return await this.flightService.getFlightById(id);
   }

@@ -59,7 +59,7 @@ const page = () => {
       <td className="font-sans table-cell sm:hidden">
         {item.bookingReference}
       </td>
-      <td className="font-sans hidden lg:table-cell">{item.passengerType}</td>
+      <td className="font-sans hidden lg:table-cell">{item.passenger.passengerType}</td>
       <td className="font-sans hidden lg:table-cell">
         {item.flightSeat.seatClass}
       </td>

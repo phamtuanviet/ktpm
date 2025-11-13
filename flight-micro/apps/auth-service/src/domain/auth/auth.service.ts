@@ -1,5 +1,4 @@
-import { HttpException, Inject, Injectable } from '@nestjs/common';
-import { ClientProxy } from '@nestjs/microservices/client/client-proxy';
+import { HttpException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RedisService } from 'src/redis/redis.service';
 import { AuthRepository } from './auth.repository';
@@ -8,17 +7,17 @@ import * as bcrypt from 'bcrypt';
 import { AuthUser } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
 import { RefreshTokenRepository } from './refreshToken.repository';
+import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 
 @Injectable()
 export class AuthService {
   constructor(
-    @Inject() private readonly prismaService: PrismaService,
-    @Inject() private readonly redisService: RedisService,
-    @Inject('logging-queue') private readonly loggingClient: ClientProxy,
-    @Inject('email-queue') private readonly emailClient: ClientProxy,
-    @Inject() private readonly authRepository: AuthRepository,
+    private readonly prismaService: PrismaService,
+    private readonly redisService: RedisService,
+    private readonly authRepository: AuthRepository,
     private jwtService: JwtService,
     private readonly refreshTokenRepo: RefreshTokenRepository,
+    private readonly amqpConnection: AmqpConnection,
   ) {}
 
   private toSafeUser(user: AuthUser) {
@@ -41,12 +40,20 @@ export class AuthService {
 
   createRefreshToken(user: AuthUser) {
     return this.jwtService.sign(
-      { sub: user.id },
+      { sub: user.id, role: user.role, email: user.email },
       {
         secret: process.env.REFRESH_TOKEN_SECRET,
         expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN,
       },
     );
+  }
+
+  decodeRefreshToken(token: string): string {
+    const payload = this.jwtService.verify(token, {
+      secret: process.env.REFRESH_TOKEN_SECRET,
+    });
+
+    return payload.sub;
   }
 
   async register(registerDto: RegisterDto) {
@@ -85,13 +92,18 @@ export class AuthService {
       verificationCode,
       15 * 60,
     );
-    this.emailClient.emit('send-verification-email', {
-      email: newUser.email,
-      code: verificationCode,
-    });
-    this.loggingClient.emit('log', {
-      message: `New user registered: ${newUser.email}`,
-    });
+    // this.emailClient.emit('send-verification-email', {
+    //   email: newUser.email,
+    //   code: verificationCode,
+    // });
+    await this.amqpConnection.publish(
+      'email-exchange',
+      'send-verification-email',
+      {
+        email: newUser.email,
+        code: verificationCode,
+      },
+    );
 
     const safeUser = this.toSafeUser(newUser);
 
@@ -103,7 +115,6 @@ export class AuthService {
       `email-verification-register:${userId}`,
     );
     if (storedCode != code) {
-      console.log(storedCode, storedCode.type);
       throw new HttpException('Invalid or expired verification code', 400);
     }
 
@@ -122,7 +133,6 @@ export class AuthService {
       expiresAt,
       deviceInfo,
     );
-    this.loggingClient.emit('log', { message: `User verified: ${user.email}` });
 
     const safeUser = this.toSafeUser(user);
 
@@ -144,13 +154,19 @@ export class AuthService {
       newOtp,
       15 * 60,
     );
-    this.emailClient.emit('send-verification-email', {
-      email: user?.email,
-      code: newOtp,
-    });
-    this.loggingClient.emit('log', {
-      message: `Resent OTP to user: ${user?.email}`,
-    });
+    // this.emailClient.emit('send-verification-email', {
+    //   email: user?.email,
+    //   code: newOtp,
+    // });
+    await this.amqpConnection.publish(
+      'email-exchange',
+      'send-verification-email',
+      {
+        email: user?.email,
+        code: newOtp,
+      },
+    );
+
     const safeUser = this.toSafeUser(user);
 
     return { user: safeUser };
@@ -182,9 +198,7 @@ export class AuthService {
       deviceInfo,
     );
     const safeUser = this.toSafeUser(user);
-    this.loggingClient.emit('log', {
-      message: `User logged in: ${user.email}`,
-    });
+
     return {
       user: safeUser,
       accessToken,
@@ -202,9 +216,6 @@ export class AuthService {
     );
     if (storedToken) {
       await this.refreshTokenRepo.revoke(storedToken.id);
-      this.loggingClient.emit('log', {
-        message: `User logged out: ${storedToken.userId}`,
-      });
     }
     return { message: 'Logout successful' };
   }
@@ -220,13 +231,20 @@ export class AuthService {
       newOtp,
       15 * 60,
     );
-    this.emailClient.emit('send-verification-reset-password', {
-      email: user?.email,
-      code: newOtp,
-    });
-    this.loggingClient.emit('log', {
-      message: `Sent OTP to user for password reset: ${user?.email}`,
-    });
+    // this.emailClient.emit('send-verification-reset-password', {
+    //   email: user?.email,
+    //   code: newOtp,
+    // });
+
+    await this.amqpConnection.publish(
+      'email-exchange',
+      'send-verification-reset-password',
+      {
+        email: user?.email,
+        code: newOtp,
+      },
+    );
+
     const safeUser = this.toSafeUser(user);
     return { user: safeUser };
   }
@@ -256,14 +274,8 @@ export class AuthService {
       expiresAt,
       deviceInfo,
     );
-    this.loggingClient.emit('log', {
-      message: `Reset password verified: ${user.email}`,
-    });
 
     const safeUser = this.toSafeUser(user);
-    this.loggingClient.emit('log', {
-      message: `User logged in: ${user.email}`,
-    });
 
     return {
       user: safeUser,
@@ -279,23 +291,22 @@ export class AuthService {
     }
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     await this.authRepository.updatePassword(userId, hashedPassword);
-    this.loggingClient.emit('log', {
-      message: `Password reset for user: ${user.email}`,
-    });
 
     const safeUser = this.toSafeUser(user);
 
     return { user: safeUser };
   }
 
-  async googleLogin(body: {
-    email: string;
-    provider: string;
-    providerId: string;
-    name: string;
-    deviceInfo: string;
-  }) {
-    const { email, provider, providerId, name, deviceInfo } = body;
+  async googleLogin(
+    body: {
+      email: string;
+      provider: string;
+      providerId: string;
+      name: string;
+    },
+    deviceInfo: string,
+  ) {
+    const { email, provider, providerId, name } = body;
 
     const existingUser = await this.authRepository.findByEmail(email);
 
@@ -318,8 +329,8 @@ export class AuthService {
       );
 
       return {
-        user: this.toSafeUser(existingUser),
         accessToken,
+        user: this.toSafeUser(existingUser),
         refreshToken,
       };
     } else if (
@@ -353,7 +364,6 @@ export class AuthService {
         provider,
         providerId,
       );
-      const accessToken = this.createAccessToken(newUser);
       const refreshToken = this.createRefreshToken(newUser);
 
       await this.refreshTokenRepo.create(
@@ -364,16 +374,40 @@ export class AuthService {
       );
       return {
         user: this.toSafeUser(newUser),
-        accessToken,
+        accessToken: this.createAccessToken(newUser),
         refreshToken,
       };
     }
   }
 
-  async refreshAccessToken(userId: string, refreshToken?: string) {
+  async refreshAccessToken(refreshToken: string) {
     if (!refreshToken) {
       throw new HttpException('Refresh token is required', 400);
     }
+    const userId = this.decodeRefreshToken(refreshToken);
+    const user = await this.authRepository.findById(userId);
+    if (!user) {
+      throw new HttpException('User not found', 404);
+    }
+    const storedToken = await this.refreshTokenRepo.findValidToken(
+      userId,
+      refreshToken,
+    );
+    if (!storedToken) {
+      throw new HttpException('Invalid or expired refresh token', 401);
+    }
+    const newAccessToken = this.createAccessToken(user);
+
+    return {
+      accessToken: newAccessToken,
+    };
+  }
+
+  async authenticateWithGoogle(refreshToken: string) {
+    if (!refreshToken) {
+      throw new HttpException('Refresh token is required', 400);
+    }
+    const userId = this.decodeRefreshToken(refreshToken);
     const user = await this.authRepository.findById(userId);
     if (!user) {
       throw new HttpException('User not found', 404);

@@ -8,6 +8,7 @@ import { RedisService } from 'src/redis/redis.service';
 import { CreatePassengerDto } from '../passenger/dto/createPassenger.dto';
 import { SeatClass } from 'generated/prisma';
 import { CreateBookingDto } from './dto/createBooking.dto';
+import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 @Injectable()
 export class BookingService {
   constructor(
@@ -16,8 +17,10 @@ export class BookingService {
     private readonly ticketService: TicketService,
     private readonly prismaService: PrismaService,
     private readonly redisService: RedisService,
-    @Inject('logging-queue') private readonly loggingQueue: ClientProxy,
-    @Inject('email-queue') private readonly emailQueue: ClientProxy,
+    // @Inject('logging-queue') private readonly loggingQueue: ClientProxy,
+    private readonly amqpConnection: AmqpConnection,
+
+    // @Inject('email-queue') private readonly emailQueue: ClientProxy,
   ) {}
 
   safeMapTicket(ticket: any) {
@@ -33,7 +36,12 @@ export class BookingService {
       newOtp,
       15 * 60,
     );
-    this.emailQueue.emit('send-otp-booking', {
+    // this.emailQueue.emit('send-otp-booking', {
+    //   email,
+    //   code: newOtp,
+    // });
+
+    await this.amqpConnection.publish('email-exchange', 'send-otp-booking', {
       email,
       code: newOtp,
     });
@@ -55,38 +63,35 @@ export class BookingService {
     }
   }
 
-  async buyTickets(dto: CreateBookingDto) {
+  async buyTickets(dto: CreateBookingDto, email: string) {
     const {
-      outBoundFlightId,
-      inBoundFlightId,
-      outBoundSeatClass,
-      inBoundSeatClass,
+      outboundFlightId,
+      inboundFlightId,
+      outboundSeatClass,
+      inboundSeatClass,
       passengers,
       otp,
     } = dto;
-    const email = passengers[0].email;
     const nums = passengers.filter((p) => p.passengerType !== 'INFANT').length;
     const isOtpValid = await this.verifyBuyTickets(email, otp);
     if (isOtpValid) {
       const data = await this.prismaService.$transaction(async (tx) => {
         const passengerRecords = await Promise.all(
           passengers.map((passenger) => {
-            return this.passengerService.createPassenger(passenger, tx);
+            return this.passengerService.createPassenger(passenger, email, tx);
           }),
         );
 
-        const { flightSeat: outBoundFlightSeat } =
+        const { flightSeat: outboundFlightSeat } =
           await this.flightSeatService.getFlightSeatsByFlightIdAndSeatType(
-            outBoundFlightId,
-            outBoundSeatClass,
+            outboundFlightId,
+            outboundSeatClass,
             tx,
           );
 
-        console.log(outBoundFlightSeat);
-
         if (
-          outBoundFlightSeat.totalSeats <
-          outBoundFlightSeat.bookedSeats + nums
+          outboundFlightSeat.totalSeats <
+          outboundFlightSeat.bookedSeats + nums
         ) {
           throw new HttpException('Not enough seats', 400);
         }
@@ -95,54 +100,53 @@ export class BookingService {
 
         const outTicketRecords = await Promise.all(
           passengerRecords.map((passenger, index) => {
-            const prefix = outBoundFlightSeat.seatClass.charAt(0);
-            const number = outBoundFlightSeat.bookedSeats + index + 1;
+            const prefix = outboundFlightSeat.seatClass.charAt(0);
+            const number = outboundFlightSeat.bookedSeats + index + 1;
             let seatNumber = prefix + number;
             if (passenger.passengerType === 'INFANT') {
               seatNumber = null;
             }
             return this.ticketService.createTicket(
               passenger.id,
-              outBoundFlightSeat.id,
+              outboundFlightSeat.id,
               seatNumber,
               tx,
             );
           }),
         );
-        console.log(outTicketRecords);
         ticketRecords.push(...outTicketRecords);
         await this.flightSeatService.updateBookedSeats(
-          outBoundFlightSeat.id,
+          outboundFlightSeat.id,
           nums,
           tx,
         );
 
-        if (inBoundFlightId && inBoundSeatClass) {
-          const { flightSeat: inBoundFlightSeat } =
+        if (inboundFlightId && inboundSeatClass) {
+          const { flightSeat: inboundFlightSeat } =
             await this.flightSeatService.getFlightSeatsByFlightIdAndSeatType(
-              inBoundFlightId,
-              inBoundSeatClass,
+              inboundFlightId,
+              inboundSeatClass,
               tx,
             );
 
           if (
-            inBoundFlightSeat.totalSeats <
-            inBoundFlightSeat.bookedSeats + nums
+            inboundFlightSeat.totalSeats <
+            inboundFlightSeat.bookedSeats + nums
           ) {
             throw new HttpException('Not enough seats', 400);
           }
 
           const inTicketRecords = await Promise.all(
             passengerRecords.map((passenger, index) => {
-              const prefix = inBoundFlightSeat.seatClass.charAt(0);
-              const number = inBoundFlightSeat.bookedSeats + index + 1;
+              const prefix = inboundFlightSeat.seatClass.charAt(0);
+              const number = inboundFlightSeat.bookedSeats + index + 1;
               let seatNumber = prefix + number;
               if (passenger.passengerType == 'INFANT') {
                 seatNumber = null;
               }
               return this.ticketService.createTicket(
                 passenger.id,
-                inBoundFlightSeat.id,
+                inboundFlightSeat.id,
                 seatNumber,
                 tx,
               );
@@ -150,7 +154,7 @@ export class BookingService {
           );
           ticketRecords.push(...inTicketRecords);
           await this.flightSeatService.updateBookedSeats(
-            inBoundFlightSeat.id,
+            inboundFlightSeat.id,
             nums,
             tx,
           );
@@ -159,17 +163,27 @@ export class BookingService {
         const flightDataEmail = {
           departureAirport: dto.departureAirport,
           arrivalAirport: dto.arrivalAirport,
-          outBoundFlightNumber: dto.outBoundFlightNumber,
-          inBoundFlightNumber: dto.inBoundFlightNumber,
-          outBoundFlightId,
-          inBoundFlightId,
+          outboundFlightNumber: dto.outboundFlightNumber,
+          inboundFlightNumber: dto.inboundFlightNumber,
+          outboundFlightId,
+          inboundFlightId,
         };
 
-        this.emailQueue.emit('send-booking-confirmation', {
-          email,
-          tickets: ticketRecords,
-          flightDataEmail,
-        });
+        // this.emailQueue.emit('send-booking-confirmation', {
+        //   email,
+        //   tickets: ticketRecords,
+        //   flightDataEmail,
+        // });
+
+        await this.amqpConnection.publish(
+          'email-exchange',
+          'send-booking-confirmation',
+          {
+            email,
+            tickets: ticketRecords,
+            flightDataEmail,
+          },
+        );
 
         const safeTickets = ticketRecords.map((t) => this.safeMapTicket(t));
 

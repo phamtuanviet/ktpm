@@ -1,15 +1,58 @@
 import axios from "axios";
 import { toast } from "sonner";
+import { setUser, setIsLogin } from "@/redux/features/authSlice";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL + "/news";
+const baseURL = process.env.NEXT_PUBLIC_API_URL;
 
 const newsApi = axios.create({
   baseURL: API_BASE_URL,
 });
 
+newsApi.interceptors.request.use((config) => {
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("accessToken");
+    if (token && config.headers) {
+      config.headers["Authorization"] = `Bearer ${token}`;
+    }
+  }
+  return config;
+});
+
+// Interceptor xử lý lỗi chung
 newsApi.interceptors.response.use(
   (response) => response.data,
-  (error) => {
+  async (error) => {
+    const originalRequest = error.config;
+
+    // Token expired và chưa retry
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      try {
+        // Gọi API refresh token (cookie tự gửi)
+        const res = await axios.post(
+          `${baseURL}/auth/refresh-access-token`,
+          {},
+          { withCredentials: true }
+        );
+
+        const newAccessToken = res.data.accessToken;
+        localStorage.setItem("accessToken", newAccessToken);
+
+        // Retry request với token mới
+        originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
+        return newsApi(originalRequest);
+      } catch (refreshError) {
+        // Nếu refresh cũng fail → logout hoặc redirect login
+        store.dispatch(setUser(null));
+        store.dispatch(setIsLogin(false));
+        // Nếu refresh cũng fail → logout hoặc redirect login
+        localStorage.removeItem("accessToken");
+        return Promise.reject(refreshError);
+      }
+    }
+
     return Promise.reject(error);
   }
 );
@@ -17,7 +60,7 @@ newsApi.interceptors.response.use(
 const newsService = {
   getAllNews: async () => {
     try {
-      return await newsApi.get("/", { withCredentials: true });
+      return await newsApi.get("/");
     } catch (error) {
       toast.error(error?.response?.data?.message || "Something went wrong");
       return null;
@@ -26,12 +69,11 @@ const newsService = {
 
   getLatestNews: async (skip = 0, take = 5) => {
     try {
-      return await newsApi.get("/get-last", {
+      return await newsApi.get("/get-lastest", {
         params: {
           skip,
           take,
         },
-        withCredentials: true,
       });
     } catch (error) {
       toast.error(error?.response?.data?.message || "Something went wrong");
@@ -41,7 +83,7 @@ const newsService = {
 
   getNewsBySearch: async (page, pageSize = 10, query, sortBy, sortOrder) => {
     try {
-      const data = await newsApi.get(`/get-news-by-search`, {
+      const data = await newsApi.get(`/news-admin`, {
         params: {
           page,
           pageSize,
@@ -49,7 +91,6 @@ const newsService = {
           sortBy,
           sortOrder,
         },
-        withCredentials: true,
       });
       return data;
     } catch (error) {
@@ -60,7 +101,7 @@ const newsService = {
 
   getNewsById: async (id) => {
     try {
-      return await newsApi.get(`/${id}`, { withCredentials: true });
+      return await newsApi.get(`/${id}`);
     } catch (error) {
       toast.error(error?.response?.data?.message || "Something went wrong");
       return null;
@@ -69,7 +110,7 @@ const newsService = {
 
   createNews: async (newsData) => {
     try {
-      return await newsApi.post("/", newsData, { withCredentials: true });
+      return await newsApi.post("/", newsData);
     } catch (error) {
       toast.error(error?.response?.data?.message || "Something went wrong");
       return null;
@@ -78,7 +119,7 @@ const newsService = {
 
   updateNews: async (id, updateData) => {
     try {
-      return await newsApi.put(`/${id}`, updateData, { withCredentials: true });
+      return await newsApi.put(`/${id}`, updateData);
     } catch (error) {
       toast.error(error?.response?.data?.message || "Something went wrong");
       return null;
@@ -89,9 +130,8 @@ const newsService = {
     try {
       filterData.page = filterData?.page || 1;
       filterData.pageSize = filterData?.pageSize || 10;
-      return await newsApi.get("/filter", {
+      return await newsApi.get("/news-filter-admin", {
         params: filterData,
-        withCredentials: true,
       });
     } catch (error) {
       toast.error(error?.response?.data?.message || "Something went wrong");
@@ -101,7 +141,7 @@ const newsService = {
 
   deleteNews: async (id) => {
     try {
-      const data = await newsApi.delete(`/${id}`, { withCredentials: true });
+      const data = await newsApi.put(`/delete`, { id });
       toast.success("delete success");
       return data;
     } catch (error) {
@@ -112,7 +152,7 @@ const newsService = {
 
   countNews: async () => {
     try {
-      return await newsApi.get("/count-news", { withCredentials: true });
+      return await newsApi.get("/count-news");
     } catch (error) {
       toast.error(error?.response?.data?.message || "Something went wrong");
       return null;

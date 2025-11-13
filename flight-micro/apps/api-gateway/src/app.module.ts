@@ -11,6 +11,10 @@ import { BookingModule } from './domains/booking/booking.module';
 import { FlightModule } from './domains/flight/flight.module';
 import { AirportModule } from './domains/airport/airport.module';
 import { TicketModule } from './domains/ticket/ticket.module';
+import { LoggingModule } from './log/logging.module';
+import { LoggingService } from './log/logging.service';
+import { APP_FILTER } from '@nestjs/core';
+import { AllExceptionsFilter } from './common/filters/allException.filter';
 
 @Module({
   imports: [
@@ -22,6 +26,7 @@ import { TicketModule } from './domains/ticket/ticket.module';
         ttl: 60,
       }),
     }),
+    LoggingModule,
     ProxyModule,
     AuthModule,
     NewsModule,
@@ -34,6 +39,11 @@ import { TicketModule } from './domains/ticket/ticket.module';
     TicketModule,
   ],
   controllers: [],
-  providers: [AppService],
+  providers: [
+    {
+      provide: APP_FILTER,
+      useClass: AllExceptionsFilter,
+    },
+  ],
 })
 export class AppModule {}

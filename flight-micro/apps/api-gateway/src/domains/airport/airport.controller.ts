@@ -11,7 +11,7 @@ export class AirportController {
   async getAirportsForClient(@Req() req: Request, @Res() res: Response) {
     const { airports } = await this.airportService.getAirportsForClient(req);
     return res.json({
-      airports,
+      data: airports,
       sucess: true,
     });
   }
@@ -21,7 +21,7 @@ export class AirportController {
     const { airports } =
       await this.airportService.getAirportsInFlightForAdmin(req);
     return res.json({
-      airports,
+      data: airports,
       sucess: true,
     });
   }

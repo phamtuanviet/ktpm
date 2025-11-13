@@ -1,5 +1,13 @@
-import { IsOptional, IsString, IsInt, Min, IsIn } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsInt,
+  Min,
+  IsIn,
+  IsEnum,
+} from 'class-validator';
 import { Transform, Type } from 'class-transformer';
+import { FlightStatus } from 'generated/prisma';
 
 export class FilterFlightDto {
   @IsOptional()
@@ -17,6 +25,10 @@ export class FilterFlightDto {
   @IsOptional()
   @IsString()
   arrivalAirport?: string;
+
+  @IsOptional()
+  @IsEnum(FlightStatus)
+  status?: FlightStatus;
 
   @IsOptional()
   @Transform(({ value }) => new Date(value))
@@ -42,7 +54,7 @@ export class FilterFlightDto {
 
   @IsOptional()
   @IsString()
-  sortBy?: string = 'bookedAt';
+  sortBy?: string = 'flightNumber';
 
   @IsOptional()
   @IsIn(['asc', 'desc'])

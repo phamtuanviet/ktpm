@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { SeatClass } from 'generated/prisma';
+import { PassengerType, SeatClass } from 'generated/prisma';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 import { FilterTicketDto } from './dto/filterTicket.dto';
@@ -44,7 +44,6 @@ export class TicketRepository {
     seatNumber?: string,
     tx?: any,
   ) {
-    console.log(passengerId, flightSeatId, cancelCode, bookingReference);
     const db = tx ?? this.prismaService;
     return db.ticket.create({
       data: {
@@ -57,7 +56,7 @@ export class TicketRepository {
       include: {
         flightSeat: true,
         passenger: true,
-      }
+      },
     });
   }
 
@@ -66,10 +65,10 @@ export class TicketRepository {
     return db.ticket.update({
       where: {
         cancelCode,
-        isCanceled: false,
+        isCancelled: false,
       },
       data: {
-        isCanceled: true,
+        isCancelled: true,
         cancelAt: new Date(),
       },
     });
@@ -84,28 +83,40 @@ export class TicketRepository {
     const skip = (pageNum - 1) * pageSizeNum;
 
     const operatorMap = {
-      flightId: (val: string) => ({
-        flightSeat: { flightId: { equals: val } },
+      passengerType: (val: PassengerType) => ({
+        passenger: { passengerType: { equals: val } },
       }),
-      id: (val: string) => ({ equal: val }),
-      email: (val: string) => ({
+      seatClass: (val: SeatClass) => ({
+        flightSeat: { seatClass: { equals: val } },
+      }),
+      passengerName: (val: string) => ({
+        passenger: { fullName: { contains: val } },
+      }),
+      id: (val: string) => ({ id: { equal: val } }),
+      passengerEmail: (val: string) => ({
         passenger: { email: { equals: val } },
       }),
-      isCanceled: (val: string) => ({ equals: val === 'true' }),
+      isCancelled: (val: boolean) => ({
+        isCancelled: { equals: val },
+      }),
     };
 
     const where = Object.entries(filters)
       .filter(([key, val]) => val && operatorMap[key])
       .reduce(
         (acc, [key, val]) => {
-          acc[key] = operatorMap[key](val);
-          return acc;
+          return { ...acc, ...operatorMap[key](val) };
         },
         {} as Record<string, any>,
       );
 
-    if (!Object.keys(where).length)
-      throw new Error('At least one filter param is required');
+    if (!Object.keys(where).length) {
+      return {
+        tickets: [],
+        totalPages: 0,
+        currentPage: 1,
+      };
+    }
 
     const [tickets, totalTickets] = await this.prismaService.$transaction([
       this.prismaService.ticket.findMany({
@@ -138,11 +149,11 @@ export class TicketRepository {
     if (query) {
       searchCondition.OR = [
         {
-          passsenger: {
+          passenger: {
             is: {
               OR: [
                 { email: { startsWith: query } },
-                { name: { startsWith: query } },
+                { fullName: { startsWith: query } },
               ],
             },
           },
@@ -150,7 +161,7 @@ export class TicketRepository {
             is: {
               OR: [
                 { flightId: { startsWith: query } },
-                { id: { startWith: query } },
+                { id: { startsWith: query } },
               ],
             },
           },
@@ -220,7 +231,7 @@ export class TicketRepository {
           gte: sevenDaysAgo,
           lt: tomorrow,
         },
-        isCancel: false,
+        isCancelled: false,
       },
       include: {
         flightSeat: true,
@@ -229,28 +240,46 @@ export class TicketRepository {
     });
   }
 
-  getTicketByEmailOrBookingReference(query: string) {
-    return this.prismaService.ticket.findMany({
-      where: {
-        OR: [
-          {
-            passenger: {
-              email: {
-                startsWith: query,
+  getTicketByEmailOrBookingReference(query?: string, emailUser?: string) {
+    if (query && query != 'none') {
+      return this.prismaService.ticket.findMany({
+        where: {
+          isCancelled: false,
+          OR: [
+            {
+              passenger: {
+                email: {
+                  contains: query,
+                },
               },
             },
-          },
-          {
-            bookingReference: {
-              startsWith: query,
+            {
+              bookingReference: {
+                contains: query,
+              },
+            },
+          ],
+        },
+        include: {
+          flightSeat: true,
+          passenger: true,
+        },
+      });
+    } else {
+      return this.prismaService.ticket.findMany({
+        where: {
+          isCancelled: false,
+          passenger: {
+            email: {
+              contains: emailUser,
             },
           },
-        ],
-      },
-      include: {
-        flightSeat: true,
-        passenger: true,
-      },
-    });
+        },
+        include: {
+          flightSeat: true,
+          passenger: true,
+        },
+      });
+    }
   }
 }

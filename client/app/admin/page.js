@@ -38,15 +38,10 @@ const page = () => {
         const flights = await flightService.countFlights();
         const news = await newsService.countNews();
 
-        // console.log(users);
-        // console.log(aircrafts);
-        // console.log(flights);
-        // console.log(news);
-
         setCount({
-          users: users.count,
+          users: users.data.count,
           aircrafts: aircrafts.count,
-          flights: flights.count,
+          flights: flights.data.count,
           news: news.count,
         });
       } catch (error) {
@@ -60,9 +55,9 @@ const page = () => {
   useEffect(() => {
     const fetchRevenue = async () => {
       try {
-        const revenueData = await revenueService.getRevenue();
-        // console.log(revenueData);
-        setRevenue(revenueData);
+        const revenueData = await ticketService.getRevenue();
+
+        setRevenue(revenueData.data.result);
       } catch (error) {
         console.error("Error fetching revenue:", error);
       }
@@ -76,7 +71,7 @@ const page = () => {
       try {
         const res = await flightService.countStatus();
 
-        const formatted = (res.count || []).map((item) => ({
+        const formatted = (res.data.count || []).map((item) => ({
           name: item.status,
           value: item.count,
         }));
@@ -94,10 +89,7 @@ const page = () => {
     const fetchTicketStats = async () => {
       try {
         const res = await ticketService.countTicketStats();
-
-        console.log(res.data);
-
-        setTicketStats(res.data);
+        setTicketStats(res.data.data);
       } catch (error) {
         console.error("Error fetching ticket stats:", error);
       }

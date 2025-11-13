@@ -59,7 +59,7 @@ export default function ForgetPasswordForm() {
   const router = useRouter();
   const dispatch = useDispatch();
 
-  const { error, message } = useSelector((state) => state.auth);
+  const { message } = useSelector((state) => state.auth);
 
   const onSubmit = async (values) => {
     try {
@@ -79,13 +79,8 @@ export default function ForgetPasswordForm() {
   };
 
   useEffect(() => {
-    if (error) {
-      toast.error(error);
-    }
-    if (message && !error) {
-      toast.success(message);
-    }
-  }, [error, message]);
+    toast.info(message);
+  }, [message]);
 
   return (
     <div className="flex justify-center items-center min-h-screen p-4">

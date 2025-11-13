@@ -74,7 +74,6 @@ export default function Page() {
     const hh = String(vnH).padStart(2, "0");
     const mm = String(utcM).padStart(2, "0");
     const ss = String(utcS).padStart(2, "0");
-    console.log(`${hh}:${mm}:${ss}`);
     return `${hh}:${mm}:${ss}`;
   };
 
@@ -84,7 +83,6 @@ export default function Page() {
       setFilterInboundFlight(inboundFlights);
       return;
     } else if (timeRange) {
-      console.log(timeRange);
       const { start, end } = JSON.parse(timeRange);
 
       if (step === "outbound") {

@@ -5,13 +5,14 @@ import { FlightSeatRepository } from './flightSeat.repository';
 import { SeatClass } from 'generated/prisma';
 import { CreateFlightSeatsForFlightDto } from './dto/createFlighSeatForFlight.dto';
 import { GetSeatsByFlightsDto } from './dto/getSeatsByFlights.dto';
+import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 
 @Injectable()
 export class FlightSeatService {
   constructor(
     private readonly flightSeatRepository: FlightSeatRepository,
     private readonly prismaService: PrismaService,
-    @Inject('logging-queue') private readonly loggingQueue: ClientProxy,
+    private readonly amqpConnection: AmqpConnection,
   ) {}
 
   async getFlightSeatById(id: string) {
@@ -88,6 +89,6 @@ export class FlightSeatService {
 
   async getFlightSeatsByFlights(dto: GetSeatsByFlightsDto) {
     const seats = await this.flightSeatRepository.getSeatsByFlightIds(dto.ids);
-    return { seats };
+    return { seats }
   }
 }

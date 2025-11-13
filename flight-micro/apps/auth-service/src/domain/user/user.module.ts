@@ -1,13 +1,12 @@
 import { Module } from '@nestjs/common';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
-import { RedisModule } from '@nestjs-modules/ioredis';
-import { PrismaModule } from 'src/prisma/prisma.module';
-import { RmqModule } from 'src/rbmq/rmq.module';
 import { UserRepository } from './user.repository';
+import { SharedRabbitModule } from 'src/rbmq/shared-rabbit.module';
+import { RedisModule } from 'src/redis/redis.module';
 
 @Module({
-  imports: [RedisModule, PrismaModule, RmqModule.register('logging-queue')],
+  imports: [SharedRabbitModule, RedisModule],
   controllers: [UserController],
   providers: [UserService, UserRepository],
 })

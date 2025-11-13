@@ -3,6 +3,7 @@ import { PassengerRepository } from './passenger.repositoty';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ClientProxy } from '@nestjs/microservices';
 import { CreatePassengerDto } from './dto/createPassenger.dto';
+import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 
 @Injectable()
 export class PassengerService {
@@ -10,7 +11,7 @@ export class PassengerService {
   constructor(
     private readonly passengerRepository: PassengerRepository,
     private readonly prismaService: PrismaService,
-    @Inject('logging-queue') private readonly loggingQueue: ClientProxy,
+    private readonly amqpConnection: AmqpConnection,
   ) {
     // Dependency injection would go here
   }
@@ -26,9 +27,12 @@ export class PassengerService {
     return { passengers };
   }
 
-  async createPassenger(createPassengerDto: CreatePassengerDto, tx?: any) {
-    const { fullName, passport, email, dob, passengerType } =
-      createPassengerDto;
+  async createPassenger(
+    createPassengerDto: CreatePassengerDto,
+    email: string,
+    tx?: any,
+  ) {
+    const { fullName, passport, dob, passengerType } = createPassengerDto;
     const passenger = await this.passengerRepository.createPassenger(
       fullName,
       email,

@@ -11,12 +11,11 @@ const page = () => {
   const [dataTickets, setDataTickets] = useState([]);
   const [noResult, setNoResult] = useState(false);
 
-  
   const handleSearch = async () => {
     if (query) {
       const newData = await ticketService.lookUpTicket(query);
       if (newData.data.length === 0) setNoResult(true);
-      setDataTickets(newData.data);
+      setDataTickets(newData.data.data);
     } else {
       setDataTickets([]);
       setNoResult(true);

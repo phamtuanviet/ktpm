@@ -77,12 +77,6 @@ const page = () => {
           >
             <Pen className="w-[16px] h-[16px] text-white" />
           </button>
-          <button
-            className="w-7 h-7 flex items-center justify-center rounded-full bg-red-200 cursor-pointer"
-            onClick={() => deleteAircraft(item)}
-          >
-            <X className="w-[16px] h-[16px] text-white" />
-          </button>
         </div>
       </td>
     </tr>
@@ -95,8 +89,8 @@ const page = () => {
         pageSize: 10,
       };
       const res = await aircraftService.filterAircraft(filterData);
-      setAircrafts(res?.data.aircrafts);
-      setTotalPages(res?.data.totalPages);
+      setAircrafts(res?.aircrafts);
+      setTotalPages(res?.totalPages);
     } catch (error) {
       console.error("Error fetch news:", error);
       setAircrafts([]);

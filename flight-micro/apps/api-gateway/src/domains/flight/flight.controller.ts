@@ -1,13 +1,26 @@
-import { Controller, Get, Post, Put, Req, Res } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { FlightService } from './flight.service';
 import type { Request, Response } from 'express';
 import { SERVICES } from 'src/config/services.config';
+import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/common/guards/roles.guard';
+import { Roles } from 'src/common/decorators/roles.decorator';
 
 @Controller('/api/flight')
 export class FlightController {
   constructor(private readonly flightService: FlightService) {}
   private readonly baseUrl = SERVICES.FLIGHT_SERVICE + '/api/flight';
 
+  @Roles('ADMIN')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Post('')
   async createFlightByAdmin(@Req() req: Request, @Res() res: Response) {
     const { flight } = await this.flightService.createFlightByAdmin(req);
@@ -18,6 +31,8 @@ export class FlightController {
     });
   }
 
+  @Roles('ADMIN')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Put('/:id')
   async updateFlight(@Req() req: Request, @Res() res: Response) {
     const { flight } = await this.flightService.updateFlight(req);
@@ -39,6 +54,8 @@ export class FlightController {
     });
   }
 
+  @Roles('ADMIN')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Get('flights-admin')
   ///get-flights-by-search
   async getFlightsAdmin(@Req() req: Request, @Res() res: Response) {
@@ -52,6 +69,8 @@ export class FlightController {
     });
   }
 
+  @Roles('ADMIN')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Get('flights-filter-admin')
   async getFlightsFilterForAdmin(@Req() req: Request, @Res() res: Response) {
     const { flights, totalPages, currentPage } =
@@ -64,15 +83,20 @@ export class FlightController {
     });
   }
 
+
   @Get('flights-client')
   async getFlightsForClient(@Req() req: Request, @Res() res: Response) {
-    const { flights } = await this.flightService.getFlightsForClient(req);
+    const { outbound, inbound } =
+      await this.flightService.getFlightsForClient(req);
     return res.json({
-      flights,
+      outbound,
+      inbound,
       sucesss: true,
     });
   }
 
+  @Roles('ADMIN')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Get('count')
   async countFlights(@Req() req: Request, @Res() res: Response) {
     const { count } = await this.flightService.countFlights(req);
@@ -82,6 +106,8 @@ export class FlightController {
     });
   }
 
+  @Roles('ADMIN')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Get('count-status')
   async countStatusFlights(@Req() req: Request, @Res() res: Response) {
     const { count } = await this.flightService.countStatusFlights(req);
@@ -90,6 +116,7 @@ export class FlightController {
       sucesss: true,
     });
   }
+
 
   @Get(':id')
   async getFlightById(@Req() req: Request, @Res() res: Response) {

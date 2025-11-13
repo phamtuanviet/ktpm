@@ -10,9 +10,9 @@ import {
 import { PassengerType } from 'generated/prisma';
 
 export class CreatePassengerDto {
-  @IsNotEmpty({ message: 'Email không được để trống' })
+  @IsOptional({ message: 'Email không được để trống' })
   @IsEmail({}, { message: 'Email không đúng định dạng' })
-  email: string;
+  email?: string;
 
   @IsNotEmpty({ message: 'Name không được để trống' })
   @Matches(/^[\p{L}\s]+$/u, { message: 'Name không đúng định dạng' })

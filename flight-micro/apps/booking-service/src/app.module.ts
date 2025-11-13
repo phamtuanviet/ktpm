@@ -7,16 +7,21 @@ import { TicketModule } from './domain/ticket/ticket.module';
 import { PassengerModule } from './domain/passenger/passenger.module';
 import { FlightSeatModule } from './domain/flightSeat/flightSeat.module';
 import { BookingModule } from './domain/booking/booking.module';
+import { RmqBindingModule } from './setup/rmq-binding.module';
+import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
+import { SharedRabbitModule } from './rbmq/shared-rabbit.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    SharedRabbitModule,
+    // RmqBindingModule,
     PrismaModule,
-    RmqModule.register('logging-queue'),
-    RmqModule.register('email-queue'),
-    RmqModule.register('flight-booking-queue'),
+    // RmqModule.register('logging-queue'),
+    // RmqModule.register('email-queue'),
+    // RmqModule.register('flight-booking-exchange'),
     RedisModule,
     TicketModule,
     PassengerModule,

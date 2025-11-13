@@ -15,7 +15,7 @@ export class AirportService {
 
   async getAirportsForClient(q: string) {
     const airports = await this.airportRepository.searchAirport(q, 20);
-    return airports;
+    return {airports};
   }
 
   async getAirportsInFlightForAdmin(q: string) {

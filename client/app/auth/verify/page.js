@@ -52,9 +52,7 @@ export default function VerifyOTPForm() {
     resolver: zodResolver(otpSchema),
   });
 
-  const { user, isLoading, error, isAuthenticated, message } = useSelector(
-    (state) => state.auth
-  );
+  const { user, isLogin, message } = useSelector((state) => state.auth);
 
   const onSubmit = (data) => {
     if (type === "verify-email") {
@@ -64,7 +62,7 @@ export default function VerifyOTPForm() {
     }
   };
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isLogin) {
       toast.success("OTP verified successfully!");
       // Chuyển hướng tùy thuộc vào luồng
       if (type === "verify-email") {
@@ -73,16 +71,11 @@ export default function VerifyOTPForm() {
         router.push("/auth/forget-password?type=new-password"); // chuyển đến trang reset mật khẩu
       }
     }
-  }, [isAuthenticated, router, type]);
+  }, [isLogin, router, type]);
 
   useEffect(() => {
-    if (error) {
-      toast.error(error);
-    }
-    if (message && !error) {
-      toast.success(message);
-    }
-  }, [error, message]);
+    toast.info(message);
+  }, [message]);
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gradient-to-r from-blue-50 to-purple-50 p-4">

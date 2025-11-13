@@ -26,7 +26,6 @@ async function main() {
       .on('error', (err) => reject(err));
   });
 
-  console.log(`Read ${airports.length} airports, importing...`);
 
   for (const a of airports) {
     try {
@@ -36,7 +35,6 @@ async function main() {
     }
   }
 
-  console.log('Import completed!');
   await prisma.$disconnect();
 }
 

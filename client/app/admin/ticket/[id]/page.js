@@ -14,7 +14,8 @@ const page = () => {
   const fetchTicket = async () => {
     try {
       const res = await ticketService.getTicketById(currentId);
-      setTicket(res?.data || null);
+      console.log(res.data.ticket);
+      setTicket(res?.data.ticket || null);
     } catch (error) {
       console.error("Error fetching news:", error);
       setTicket(null);

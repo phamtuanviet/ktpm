@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Req, Res } from '@nestjs/common';
+import { Controller, Get, Post, Put, Req, Res } from '@nestjs/common';
 import { UserService } from './user.service';
 import type { Request, Response } from 'express';
 
@@ -6,16 +6,7 @@ import type { Request, Response } from 'express';
 export class UserController {
   constructor(private userService: UserService) {}
 
-  @Get('user/:id')
-  async getUserById(@Req() req: Request, @Res() res: Response) {
-    const { user } = await this.userService.getUserById(req);
-    return res.json({
-      user,
-      success: true,
-    });
-  }
-
-  @Get('search')
+  @Get('user-admin')
   async searchUsers(@Req() req: Request, @Res() res: Response) {
     const data = await this.userService.searchUsers(req);
     return res.json({
@@ -33,7 +24,7 @@ export class UserController {
     });
   }
 
-  @Get('filter-users')
+  @Get('user-filter-admin')
   async filterUsers(@Req() req: Request, @Res() res: Response) {
     const data = await this.userService.filterUsers(req);
     return res.json({
@@ -42,13 +33,23 @@ export class UserController {
     });
   }
 
-  @Post('update-user')
+  @Put('/:id')
   async updateUser(@Req() req: Request, @Res() res: Response) {
     const { user } = await this.userService.updateUser(req);
     return res.json({
       user,
       success: true,
       message: 'User updated successfully.',
+    });
+  }
+
+  @Get('/:id')
+  async getUserById(@Req() req: Request, @Res() res: Response) {
+    const { user } = await this.userService.getUserById(req);
+    
+    return res.json({
+      userData: user,
+      success: true,
     });
   }
 }

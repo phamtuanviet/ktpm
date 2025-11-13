@@ -7,11 +7,25 @@ import { AircraftService } from '../aircraft/aircraft.service';
 import { AircraftModule } from '../aircraft/aircraft.module';
 import { AirportModule } from '../airport/airport.module';
 import { FlightSagaHandler } from './flight.saga.handler';
+import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
+import { SharedRabbitModule } from 'src/rbmq/shared-rabbit.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { FlightCronService } from './flight.cron.service';
 
 @Module({
-  imports: [AircraftModule, AirportModule],
-  controllers: [FlightController, FlightSagaHandler],
-  providers: [FlightService, FlightRepository],
+  imports: [
+    AircraftModule,
+    AirportModule,
+    SharedRabbitModule,
+    ScheduleModule.forRoot(),
+  ],
+  controllers: [FlightController],
+  providers: [
+    FlightService,
+    FlightRepository,
+    FlightSagaHandler,
+    FlightCronService,
+  ],
   exports: [FlightService],
 })
 export class FlightModule {}

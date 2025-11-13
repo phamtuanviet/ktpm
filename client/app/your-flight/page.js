@@ -9,7 +9,7 @@ const page = () => {
   const [dataTickets, setDataTickets] = useState([]);
   const handleSearch = async () => {
     const newData = await ticketService.lookUpTicket("none");
-    setDataTickets(newData.data);
+    setDataTickets(newData.data.data || []);
   };
   useEffect(() => {
     handleSearch();

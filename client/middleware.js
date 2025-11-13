@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 
 export async function middleware(request) {
-  const token = request.cookies.get("token")?.value;
+  const token = request.cookies.get("refreshToken")?.value;
+
   const isAdminRoute = request.nextUrl.pathname.startsWith("/admin");
   if (isAdminRoute && !token) {
     return NextResponse.redirect(new URL("/auth?isLogin=true", request.url));
@@ -10,7 +11,9 @@ export async function middleware(request) {
 
   try {
     if (isAdminRoute && token) {
-      const secret = new TextEncoder().encode(process.env.SECRET_KEY || "mySecret");
+      const secret = new TextEncoder().encode(
+        process.env.SECRET_KEY || "change_this_secret"
+      );
       const { payload } = await jwtVerify(token, secret);
       if (payload.role !== "ADMIN") {
         return NextResponse.redirect(

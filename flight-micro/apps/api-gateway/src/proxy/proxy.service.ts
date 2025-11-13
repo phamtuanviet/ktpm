@@ -15,7 +15,7 @@ interface CustomRequest extends Request {
   body: any;
   query: any;
   method: string;
-  
+  userCurrent?: any;
 }
 
 @Injectable()
@@ -27,7 +27,6 @@ export class ProxyService {
     'host',
     'connection',
     'content-length',
-    'cookie',
     'accept-encoding',
     // Thêm các headers khác nếu cần thiết
   ];
@@ -98,14 +97,18 @@ export class ProxyService {
       req.headers['user-agent'] ||
       'Unknown device';
 
+    if (req.userCurrent) {
+      headers['x-user'] = JSON.stringify(req.userCurrent);
+    }
+
     try {
       const response = await axios({
         url: targetUrl,
-        method: method as any, // Sử dụng 'as any' cho method là chấp nhận được
+        method: method as any,
         headers,
         data,
         params: req.query,
-        validateStatus: () => true, // Cho phép Axios nhận tất cả trạng thái
+        validateStatus: () => true, 
         timeout: 15000, // Tăng timeout lên 15s cho an toàn
       });
 

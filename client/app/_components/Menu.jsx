@@ -14,14 +14,15 @@ import {
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import React from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import Swal from "sweetalert2";
 
 const Menu = () => {
   const router = useRouter();
   const pathname = usePathname();
   const dispatch = useDispatch();
-  
+  const { user } = useSelector((state) => state.auth);
+
   // Handle logout confirmation and action
   // This function will be called when the user clicks the logout link
   const handleLogout = () => {
@@ -36,10 +37,9 @@ const Menu = () => {
       cancelButtonText: "Cancel",
     }).then((result) => {
       if (result.isConfirmed) {
-        dispatch(logoutUser());
+        dispatch(logoutUser({ id: user.id }));
         localStorage.removeItem("persist:root.auth");
         router.push("/");
-        console.log("Đã logout");
       }
     });
   };

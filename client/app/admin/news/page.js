@@ -127,8 +127,8 @@ const page = () => {
         sortBy,
         sortOrder
       );
-      setNews(res?.data.news);
-      setTotalPages(res?.data.totalPages);
+      setNews(res?.listNews);
+      setTotalPages(res?.totalPages);
     } catch (error) {
       console.error("Error fetch news:", error);
       setNews([]);
@@ -175,10 +175,9 @@ const page = () => {
   };
 
   const submitCreate = async (createValues) => {
-    const { title, createdAt, thumbnail, content, isPublished } = createValues;
+    const { title, thumbnail, content, isPublished } = createValues;
     const formData = new FormData();
     formData.append("title", title);
-    formData.append("createdAt", createdAt);
     formData.append("content", content);
     if (isPublished === "") {
       formData.append("isPublished", true);
@@ -196,6 +195,7 @@ const page = () => {
   const submitUpdate = async (updatedValues) => {
     const { id, title, createdAt, thumbnail, content, isPublished } =
       updatedValues;
+
     const formData = new FormData();
     formData.append("title", title);
     formData.append("createdAt", createdAt);

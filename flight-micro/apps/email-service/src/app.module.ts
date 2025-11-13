@@ -1,8 +1,9 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
 import { MailerModule } from '@nestjs-modules/mailer';
+import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
+import { AppSubService } from './app.sub';
 
 @Module({
   imports: [
@@ -10,7 +11,7 @@ import { MailerModule } from '@nestjs-modules/mailer';
       transport: {
         host: 'smtp.gmail.com',
         port: 465,
-        secure: true, 
+        secure: true,
         auth: {
           user: process.env.SMTP_USER,
           pass: process.env.SMTP_PASS,
@@ -20,8 +21,19 @@ import { MailerModule } from '@nestjs-modules/mailer';
         from: '"My App" <laiyenviet@gmail.com>',
       },
     }),
+    RabbitMQModule.forRoot({
+      exchanges: [
+        {
+          name: 'email-exchange',
+          type: 'topic',
+          options: {
+            durable: true,
+          },
+        },
+      ],
+      uri: 'amqp://localhost:5672',
+    }),
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, AppSubService],
 })
 export class AppModule {}

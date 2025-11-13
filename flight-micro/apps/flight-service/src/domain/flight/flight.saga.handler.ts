@@ -1,10 +1,12 @@
-import { Controller, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { RabbitSubscribe } from '@golevelup/nestjs-rabbitmq'; // 👈 Import mới
 import { FlightRepository } from './flight.repository';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { RedisService } from 'src/redis/redis.service';
-import { EventPattern } from '@nestjs/microservices';
+import { PrismaService } from 'src/prisma/prisma.service'; // Giữ lại nếu cần, nhưng không dùng trực tiếp trong code này
+import { RedisService } from 'src/redis/redis.service'; // Giữ lại
 
-@Controller()
+const FLIGHT_BOOKING_EXCHANGE = 'flight-booking-exchange';
+
+@Injectable()
 export class FlightSagaHandler {
   constructor(
     private readonly flightRepository: FlightRepository,
@@ -14,7 +16,11 @@ export class FlightSagaHandler {
 
   private readonly logger = new Logger(FlightSagaHandler.name);
 
-  @EventPattern('flight.create.failed')
+  @RabbitSubscribe({
+    exchange: FLIGHT_BOOKING_EXCHANGE,
+    routingKey: 'flight.create.failed',
+    queue: 'flight-service-create-failed-queue',
+  })
   async handleCreateFlightFailed(id: string) {
     try {
       await this.flightRepository.createFlightSagaFailed(id);
@@ -25,7 +31,11 @@ export class FlightSagaHandler {
     }
   }
 
-  @EventPattern('flight.create.success')
+  @RabbitSubscribe({
+    exchange: FLIGHT_BOOKING_EXCHANGE,
+    routingKey: 'flight.create.success',
+    queue: 'flight-service-create-success-queue',
+  })
   async handleCreateFlightSuccess(id: string) {
     try {
       await this.flightRepository.conFirmedSagaStatus(id);
@@ -36,7 +46,11 @@ export class FlightSagaHandler {
     }
   }
 
-  @EventPattern('flight.update.failed')
+  @RabbitSubscribe({
+    exchange: FLIGHT_BOOKING_EXCHANGE,
+    routingKey: 'flight.update.failed',
+    queue: 'flight-service-update-failed-queue',
+  })
   async handleUpdateFlightFailed(id: string) {
     try {
       const oldData = await this.redisService.get(`flight-temp-${id}`);
@@ -49,7 +63,11 @@ export class FlightSagaHandler {
     }
   }
 
-  @EventPattern('flight.update.success')
+  @RabbitSubscribe({
+    exchange: FLIGHT_BOOKING_EXCHANGE,
+    routingKey: 'flight.update.success',
+    queue: 'flight-service-update-success-queue',
+  })
   async handleUpdateFlightSuccess(id: string) {
     try {
       await this.flightRepository.conFirmedSagaStatus(id);

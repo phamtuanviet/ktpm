@@ -9,6 +9,7 @@ import {
   sendResetOtpAPI,
   resetPasswordAPI,
   verifyResetOtpAPI,
+  authenticateWithGoogleAPI,
 } from "./authService.js";
 
 // Async action: Đăng ký người dùng
@@ -19,7 +20,24 @@ export const registerUser = createAsyncThunk(
       const data = await registerUserAPI(name, email, password);
       if (!data.success) {
         return thunkAPI.rejectWithValue({
-          message: data.message,
+          message: data?.message || "Register failed",
+        });
+      }
+      return data;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.response.data);
+    }
+  }
+);
+
+export const authenticateWithGoogle = createAsyncThunk(
+  "auth/authenticateWithGoogleAPI",
+  async ({ user }, thunkAPI) => {
+    try {
+      const data = await authenticateWithGoogleAPI(user);
+      if (!data.success) {
+        return thunkAPI.rejectWithValue({
+          message: data?.message || "Authentication failed",
         });
       }
       return data;
@@ -37,7 +55,7 @@ export const loginUser = createAsyncThunk(
       const data = await loginUserAPI(email, password);
       if (!data.success) {
         return thunkAPI.rejectWithValue({
-          message: data.message,
+          message: data?.message || "Login failed",
         });
       }
       return data;
@@ -50,12 +68,12 @@ export const loginUser = createAsyncThunk(
 // Async action: Đăng xuất người dùng
 export const logoutUser = createAsyncThunk(
   "auth/logoutUser",
-  async (_, thunkAPI) => {
+  async ({ id }, thunkAPI) => {
     try {
-      const data = await logoutUserAPI();
+      const data = await logoutUserAPI(id);
       if (!data.success) {
         return thunkAPI.rejectWithValue({
-          message: data.message,
+          message: data?.message || "Logout failed",
         });
       }
       return data;
@@ -73,7 +91,7 @@ export const sendVerifyOtp = createAsyncThunk(
       const data = await sendVerifyOtpAPI(id);
       if (!data.success) {
         return thunkAPI.rejectWithValue({
-          message: data.message,
+          message: data?.message || "Send OTP failed",
         });
       }
       return data;
@@ -91,7 +109,7 @@ export const verifyEmail = createAsyncThunk(
       const data = await verifyEmailAPI(id, otp);
       if (!data.success) {
         return thunkAPI.rejectWithValue({
-          message: data.message,
+          message: data?.message || "Verify OTP failed",
         });
       }
       return data;
@@ -108,7 +126,7 @@ export const verifyResetOtp = createAsyncThunk(
       const data = await verifyResetOtpAPI(email, otp);
       if (!data.success) {
         return thunkAPI.rejectWithValue({
-          message: data.message,
+          message: data?.message || "Verify OTP failed",
         });
       }
       return data;
@@ -126,7 +144,7 @@ export const sendResetOtp = createAsyncThunk(
       const data = await sendResetOtpAPI(email);
       if (!data.success) {
         return thunkAPI.rejectWithValue({
-          message: data.message,
+          message: data?.message || "Send OTP failed",
         });
       }
       return data;
@@ -144,8 +162,7 @@ export const resetPassword = createAsyncThunk(
       const data = await resetPasswordAPI(newPassword);
       if (!data.success) {
         return thunkAPI.rejectWithValue({
-          success: "false",
-          message: data.message,
+          message: data?.message || "Reset password failed",
         });
       }
       return data;
@@ -157,151 +174,109 @@ export const resetPassword = createAsyncThunk(
 
 const initialState = {
   user: null,
-  isAuthenticated: false,
-  isLoading: false,
-  error: null,
-  message: null,
-  isRegistered: false,
+  isLogin: false,
+  message: "",
 };
 
 const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
-    setUser(state, action) {
-      state.user = action.payload.user;
-      state.isAuthenticated = action.payload.user.isAccountVerified;
+    setUser(user) {
+      state.user = user;
     },
-    clearMessage(state) {
-      state.message = null;
-    },
-    setIsRegisteredFalse(state) {
-      state.isRegistered = false;
+    setIsLogin(isLogin) {
+      state.isLogin = isLogin;
     },
   },
   extraReducers: (builder) => {
     builder
       // registerUser
-      .addCase(registerUser.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-      })
       .addCase(registerUser.fulfilled, (state, action) => {
-        state.isLoading = false;
-        if (action.payload.user) {
-          state.user = action.payload.user;
-        }
-        state.isRegistered = true;
-        state.message = action.payload.message;
+        state.message = "Register successfully";
+        state.user = action.payload.user;
       })
       .addCase(registerUser.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action?.payload?.message || "Register failed";
+        state.message = "Register failed";
       })
       // loginUser
-      .addCase(loginUser.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-      })
+
       .addCase(loginUser.fulfilled, (state, action) => {
+        state.message = "Login successfully";
         state.user = action.payload.user;
-        state.isLoading = false;
-        state.isAuthenticated = action.payload.user.isAccountVerified;
-        state.message = action.payload.message;
+        state.isLogin = true;
+        localStorage.setItem("accessToken", action.payload.accessToken);
       })
       .addCase(loginUser.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action?.payload?.message || "Login failed";
+        state.message = "Login failed";
+      })
+
+      //authenticateWithGoogleAPI
+      .addCase(authenticateWithGoogle.fulfilled, (state, action) => {
+        state.message = "Login successfully";
+        state.user = action.payload.user;
+        state.isLogin = true;
+      })
+      .addCase(authenticateWithGoogle.rejected, (state, action) => {
+        state.message = "Login failed";
       })
 
       // logoutUser
-      .addCase(logoutUser.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-      })
       .addCase(logoutUser.fulfilled, (state, action) => {
-        state.isLoading = false;
+        state.message = "Logout successfully";
         state.user = null;
-        state.isAuthenticated = false;
-        state.message = action.payload.message;
+        state.isLogin = false;
+        localStorage.removeItem("accessToken");
       })
       .addCase(logoutUser.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action?.payload?.message || "Logout failed";
+        state.message = "Logout failed";
       })
       // sendVerifyOtp
-      .addCase(sendVerifyOtp.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-      })
       .addCase(sendVerifyOtp.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.message = action.payload.message;
+        state.message = "Send request successfully";
       })
       .addCase(sendVerifyOtp.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action?.payload?.message || "Send OTP failed";
+        state.message = "Send Otp failed";
       })
       // verifyEmail
-      .addCase(verifyEmail.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-      })
       .addCase(verifyEmail.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.message = action.payload.message;
-        if (state.user) {
-          state.user.isAccountVerified = true;
-        }
-        state.isAuthenticated = true;
+        state.message = "Verify successfully";
+        state.user = action.payload.user;
+        state.isLogin = true;
+        localStorage.setItem("accessToken", action.payload.accessToken);
       })
       .addCase(verifyEmail.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action?.payload?.message || "Verification failed";
+        state.message = "Verify failed";
       })
       // sendResetOtp
-      .addCase(sendResetOtp.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-      })
+
       .addCase(sendResetOtp.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.message = action.payload.message;
+        state.message = "Send request successfully";
       })
       .addCase(sendResetOtp.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action?.payload?.message || "Send reset OTP failed";
+        state.message = "Send reset OTP failed";
       })
       // verifyResetOtp
-      .addCase(verifyResetOtp.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-      })
+
       .addCase(verifyResetOtp.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.message = action.payload.message;
-        state.isAuthenticated = true;
+        state.isLogin = true;
         state.user = action.payload.user;
+        state.message = "Verify successfully";
+        localStorage.setItem("accessToken", action.payload.accessToken);
       })
       .addCase(verifyResetOtp.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action?.payload?.message || "Verification failed";
+        state.message = "Verify reset OTP failed";
       })
       // resetPassword
-      .addCase(resetPassword.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-      })
+
       .addCase(resetPassword.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.message = action.payload.message;
+        state.message = "Reset password successfully";
       })
       .addCase(resetPassword.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action?.payload?.message || "Reset password failed";
+        state.message = "Reset password failed";
       });
   },
 });
 
-export const { setUser, clearMessage ,setIsRegisteredFalse  } = authSlice.actions;
+export const { setUser, setIsLogin } = authSlice.actions;
 export default authSlice.reducer;

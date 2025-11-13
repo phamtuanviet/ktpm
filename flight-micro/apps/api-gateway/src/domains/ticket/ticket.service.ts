@@ -3,12 +3,15 @@ import { ProxyService } from 'src/proxy/proxy.service';
 import type { Request } from 'express';
 import { HttpService } from '@nestjs/axios';
 import { SERVICES } from 'src/config/services.config';
+import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
+import { LoggingService } from 'src/log/logging.service';
 
 @Injectable()
 export class TicketService {
   constructor(
     private readonly proxyService: ProxyService,
     private readonly httpService: HttpService,
+    private readonly logginService: LoggingService,
   ) {}
 
   private readonly baseUrl = SERVICES.BOOKING_SERVICE + '/api/ticket';
@@ -20,7 +23,9 @@ export class TicketService {
         req,
         `${this.baseUrl}/tickets-filter-admin`,
       );
-
+    if (tickets.length === 0) {
+      return { tickets, totalPages, currentPage };
+    }
     const flightIds = tickets
       ?.map((ticket) => ticket.flightSeat?.flightId)
       .filter((id) => !!id);
@@ -55,6 +60,10 @@ export class TicketService {
   async getTicketForAdmin(@Req() req: Request) {
     const { tickets, totalPages, currentPage } =
       await this.proxyService.forward(req, `${this.baseUrl}/tickets-admin`);
+
+    if (tickets.length === 0) {
+      return { tickets, totalPages, currentPage };
+    }
     const flightIds = tickets
       ?.map((ticket) => ticket.flightSeat?.flightId)
       .filter((id) => !!id);
@@ -101,7 +110,7 @@ export class TicketService {
       ...ticket,
       flight,
     };
-    return { ticket };
+    return { ticket: ticketWithFlight };
   }
 
   async cancelTicket(@Req() req: Request) {
@@ -113,6 +122,9 @@ export class TicketService {
       req,
       `${this.baseUrl}/tickets-lookup-client`,
     );
+    if (tickets.length === 0) {
+      return { tickets: [] };
+    }
     const flightIds = tickets
       ?.map((ticket) => ticket.flightSeat?.flightId)
       .filter((id) => !!id);
@@ -148,7 +160,7 @@ export class TicketService {
   async countTicketStats(@Req() req: Request) {
     return await this.proxyService.forward(
       req,
-      `${this.FLIGHT_URL}/count-tickets-stats`,
+      `${this.baseUrl}/count-tickets-stats`,
     );
   }
 

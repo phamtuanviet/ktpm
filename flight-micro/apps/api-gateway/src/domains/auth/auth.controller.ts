@@ -1,8 +1,24 @@
-import { Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  HttpException,
+  Post,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SERVICES } from 'src/config/services.config';
 import type { Request, Response } from 'express';
 import { AuthGuard } from '@nestjs/passport/dist/auth.guard';
+import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+
+interface CustomRequest extends Request {
+  userCurrent?: any;
+}
+
+const FONTEND_URL = 'http://localhost:3001';
+
 @Controller('api/auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -18,6 +34,7 @@ export class AuthController {
       message: 'Registration successful. Please verify your email.',
     });
   }
+
   @Post('verify-email')
   async verifyEmail(@Req() req: Request, @Res() res: Response) {
     const { accessToken, refreshToken, user } =
@@ -109,6 +126,7 @@ export class AuthController {
     });
   }
 
+  @UseGuards(JwtAuthGuard)
   @Post('reset-password')
   async resetPassword(@Req() req: Request, @Res() res: Response) {
     const { user } = await this.authService.resetPassword(req);
@@ -128,7 +146,7 @@ export class AuthController {
   @Get('oauth/google/callback')
   @UseGuards(AuthGuard('google'))
   async googleAuthRedirect(@Req() req: Request, @Res() res: Response) {
-    const { user, accessToken, refreshToken } =
+    const { refreshToken, accessToken, user } =
       await this.authService.googleLogin(req);
 
     res.cookie('refreshToken', refreshToken, {
@@ -138,23 +156,35 @@ export class AuthController {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    return res.json({
-      user,
-      accessToken,
-      success: true,
-      message: 'Google login successful.',
-    });
+    const redirectUrl = `${FONTEND_URL}/auth/login-google?accessToken=${encodeURIComponent(accessToken)}&user=${encodeURIComponent(
+      JSON.stringify(user),
+    )}`;
+    return res.redirect(redirectUrl);
   }
 
   @Post('refresh-access-token')
   async refreshAccessToken(@Req() req: Request, @Res() res: Response) {
-    const { accessToken, user } =
-      await this.authService.refreshAccessToken(req);
+    const { accessToken } = await this.authService.refreshAccessToken(req);
+
     return res.json({
       accessToken,
-      user,
       success: true,
       message: 'Access token refreshed successfully.',
+    });
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('google-login-authenticate')
+  authenticateWithGoogle(@Req() req: CustomRequest, @Res() res: Response) {
+    const result = this.authService.authenticateWithGoogle(req);
+
+    if (result instanceof HttpException) {
+      throw result;
+    }
+    return res.json({
+      user: result.user,
+      success: true,
+      message: 'Login successful',
     });
   }
 }

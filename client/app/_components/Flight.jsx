@@ -3,6 +3,7 @@ import Image from "next/image";
 import React, { useState } from "react";
 
 const Flight = ({ data }) => {
+  console.log(data);
   const [isDetail, setIsDetail] = useState(false);
   return (
     <div className="w-full max-w-[50rem]  flex flex-col justify-center text-center items-center">

@@ -1,40 +1,62 @@
-import { Controller, Inject } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { AmqpConnection, RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
 import { FlightSeatService } from './flightSeat.service';
 import { FlightSeatRepository } from './flightSeat.repository';
-import { ClientProxy, EventPattern } from '@nestjs/microservices';
 import { CreateFlightSeatsForFlightDto } from './dto/createFlighSeatForFlight.dto';
 
-@Controller()
+const FLIGHT_BOOKING_EXCHANGE = 'flight-booking-exchange';
+
+@Injectable()
 export class FlightSeatSagaHandle {
   constructor(
     private readonly flightSeatService: FlightSeatService,
     private readonly flightSeatRepository: FlightSeatRepository,
-    @Inject('flight-booking-queue')
-    private readonly flightBookingQueue: ClientProxy,
+    private readonly amqpConnection: AmqpConnection,
   ) {}
 
-  @EventPattern('seats.create')
+  @RabbitSubscribe({
+    exchange: FLIGHT_BOOKING_EXCHANGE,
+    routingKey: 'seats.create',
+    queue: 'flight-seat-service-create-queue',
+  })
   async handleCreateSeat(data: CreateFlightSeatsForFlightDto) {
     try {
       const { seats } =
         await this.flightSeatService.createFlightSeatsForFlight(data);
-      this.flightBookingQueue.emit('flight.create.success', data.flightId);
+      await this.amqpConnection.publish(
+        FLIGHT_BOOKING_EXCHANGE,
+        'flight.create.success',
+        data.flightId,
+      );
     } catch (error) {
-      console.error('Error creating flight seats:', error);
-      this.flightBookingQueue.emit('flight.create.failed', data.flightId);
+      await this.amqpConnection.publish(
+        FLIGHT_BOOKING_EXCHANGE,
+        'flight.create.failed',
+        data.flightId,
+      );
     }
   }
 
-  @EventPattern('seats.update')
+  @RabbitSubscribe({
+    exchange: FLIGHT_BOOKING_EXCHANGE,
+    routingKey: 'seats.update',
+    queue: 'flight-seat-service-update-queue',
+  })
   async handleUpdateSeat(data: CreateFlightSeatsForFlightDto) {
     try {
-      console.log('Updating flight seats:', data);
       const { seats } =
         await this.flightSeatService.updateFlightSeatsForFlight(data);
-      this.flightBookingQueue.emit('flight.update.success', data.flightId);
+      await this.amqpConnection.publish(
+        FLIGHT_BOOKING_EXCHANGE,
+        'flight.update.success',
+        data.flightId,
+      );
     } catch (error) {
-      console.error('Error updating flight seats:', error);
-      this.flightBookingQueue.emit('flight.update.failed', data.flightId);
+      await this.amqpConnection.publish(
+        FLIGHT_BOOKING_EXCHANGE,
+        'flight.update.failed',
+        data.flightId,
+      );
     }
   }
 }

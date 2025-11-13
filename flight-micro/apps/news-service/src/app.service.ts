@@ -25,7 +25,9 @@ export class AppService {
       title: news.title,
       thumbnailUrl: news.thumbnailUrl,
       createdAt: news.createdAt,
+      updatedAt: news.updatedAt,
       isPublished: news.isPublished,
+      content: news.content,
     };
   }
 
@@ -52,8 +54,13 @@ export class AppService {
     return { news };
   }
 
-  async updateNews(body: UpdateNewsDto, thumbnailFile?: Express.Multer.File) {
+  async updateNews(
+    id: string,
+    body: UpdateNewsDto,
+    thumbnailFile?: Express.Multer.File,
+  ) {
     let imageUrl: string | undefined = undefined;
+
     if (thumbnailFile) {
       const uploadedImage =
         await this.cloudinaryService.uploadFile(thumbnailFile);
@@ -63,7 +70,7 @@ export class AppService {
       }
     }
     const news = await this.appRepository.updateNews(
-      body.id,
+      id,
       body.title,
       body.content,
       imageUrl,
@@ -75,7 +82,7 @@ export class AppService {
   }
 
   async deleteNews(id: string) {
-    const news = await this.appRepository.deleteNews(id.toString());
+    const news = await this.appRepository.deleteNews(id);
     this.loggingQueue.emit('news deleted', news);
     return { news: this.toSafeNews(news) };
   }

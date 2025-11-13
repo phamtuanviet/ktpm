@@ -1,5 +1,4 @@
 import {
-  IsNotEmpty,
   IsOptional,
   IsBoolean,
   IsIn,
@@ -8,9 +7,7 @@ import {
 import { Transform } from 'class-transformer';
 
 export class UpdateUserDto {
-  @IsNotEmpty({ message: 'ID không được để trống.' })
-  @IsString({ message: 'ID phải là chuỗi ký tự.' })
-  readonly id: string;
+
 
   @IsOptional()
   @Transform(({ value }) => {

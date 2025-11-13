@@ -3,6 +3,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { SearchFlightDto } from './dto/searchFlight.dto';
 import { FilterFlightDto } from './dto/filterFlight.dto';
 import { SagaStatus } from '@prisma/client';
+import { FlightStatus } from 'generated/prisma';
 
 @Injectable()
 export class FlightRepository {
@@ -31,10 +32,10 @@ export class FlightRepository {
     const sortByField = sortBy ? sortBy : 'departureTime';
     const sortOrderField = sortOrder ? sortOrder : 'asc';
 
-    const searchCondition: any = {};
+    const searchCondition: any = { sagaStatus: SagaStatus.CONFIRMED };
     if (query) {
       searchCondition.OR = [
-        { sagaStatus: SagaStatus.CONFIRMED },
+        { id: { startsWith: query } },
         { flightNumber: { startsWith: query } },
         {
           departureAirport: {
@@ -86,6 +87,17 @@ export class FlightRepository {
         skip,
         take: pageSize,
         orderBy: orderByOption,
+        include: {
+          aircraft: {
+            select: { name: true },
+          },
+          departureAirport: {
+            select: { name: true, iataCode: true, icaoCode: true },
+          },
+          arrivalAirport: {
+            select: { name: true, iataCode: true, icaoCode: true },
+          },
+        },
       }),
       this.prismaService.flight.count({ where: searchCondition }),
     ]);
@@ -114,12 +126,13 @@ export class FlightRepository {
     const { page, pageSize, sortBy, sortOrder, ...filters } = dto;
     const pageNum = page && page > 0 ? page : 1;
     const pageSizeNum = pageSize && pageSize > 0 ? pageSize : 10;
-    const sortByField = sortBy ? sortBy : 'bookedAt';
+    const sortByField = sortBy ? sortBy : 'flightNumber';
     const sortOrderValue = sortOrder ? sortOrder : 'desc';
     const skip = (pageNum - 1) * pageSizeNum;
 
     const operatorMap = {
       flightNumber: (val: string) => ({ flightNumber: { startsWith: val } }),
+      status: (val: FlightStatus) => ({ status: { equals: val } }),
       id: (val: string) => ({ id: { startsWith: val } }),
       departureAirport: (val: string) => ({
         departureAirport: {
@@ -155,8 +168,7 @@ export class FlightRepository {
       .filter(([key, val]) => val && operatorMap[key])
       .reduce(
         (acc, [key, val]) => {
-          acc[key] = operatorMap[key](val);
-          return acc;
+          return { ...acc, ...operatorMap[key](val) };
         },
         {} as Record<string, any>,
       );
@@ -173,6 +185,17 @@ export class FlightRepository {
         skip,
         take: pageSize,
         orderBy: { [sortByField]: sortOrderValue },
+        include: {
+          aircraft: {
+            select: { name: true },
+          },
+          departureAirport: {
+            select: { name: true, iataCode: true, icaoCode: true },
+          },
+          arrivalAirport: {
+            select: { name: true, iataCode: true, icaoCode: true },
+          },
+        },
       }),
       this.prismaService.flight.count({ where }),
     ]);

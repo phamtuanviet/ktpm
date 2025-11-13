@@ -16,10 +16,10 @@ export class CreateBookingDto {
   passengers: CreatePassengerDto[];
 
   @IsString()
-  outBoundFlightId: string;
+  outboundFlightId: string;
 
   @IsEnum(SeatClass)
-  outBoundSeatClass: SeatClass;
+  outboundSeatClass: SeatClass;
 
   @IsString()
   departureAirport: string;
@@ -28,20 +28,20 @@ export class CreateBookingDto {
   arrivalAirport: string;
 
   @IsString()
-  outBoundFlightNumber: string;
+  outboundFlightNumber: string;
 
   @IsString()
   otp: string;
 
   @IsOptional()
   @IsString()
-  inBoundFlightId?: string;
+  inboundFlightId?: string;
 
   @IsOptional()
   @IsEnum(SeatClass)
-  inBoundSeatClass?: SeatClass;
+  inboundSeatClass?: SeatClass;
 
   @IsString()
   @IsOptional()
-  inBoundFlightNumber?: string;
+  inboundFlightNumber?: string;
 }

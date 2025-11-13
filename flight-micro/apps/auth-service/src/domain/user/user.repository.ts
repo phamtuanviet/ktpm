@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import { FilterUsersDto } from './dto/filterUsers.dto';
-import { UpdateUserDto } from './dto/updateUsers.dto';
 type QueryMode = Prisma.QueryMode;
 type UserWhereInput = Prisma.AuthUserWhereInput;
 
@@ -106,7 +105,7 @@ export class UserRepository {
     };
   }
 
-  updateUser(body: UpdateUserDto) {
+  updateUser(body: any) {
     return this.prismaService.authUser.update({
       where: { id: body.id },
       data: {

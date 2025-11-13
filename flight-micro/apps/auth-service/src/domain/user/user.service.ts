@@ -1,8 +1,7 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { UserRepository } from './user.repository';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RedisService } from 'src/redis/redis.service';
-import { ClientProxy } from '@nestjs/microservices/client/client-proxy';
 import { SearchUsersDto } from './dto/searchUsers.dto';
 import { FilterUsersDto } from './dto/filterUsers.dto';
 import { UpdateUserDto } from './dto/updateUsers.dto';
@@ -13,22 +12,32 @@ export class UserService {
     private readonly userRepository: UserRepository,
     private readonly prismaService: PrismaService,
     private readonly redisService: RedisService,
-    @Inject('logging-queue') private readonly loggingQueue: ClientProxy,
   ) {}
+
+  safeUser(user: any) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password, ...rest } = user;
+    return rest;
+  }
 
   async getUserById(id: string) {
     const user = await this.userRepository.findById(id);
-    return { user };
+    const lastestUser = this.safeUser(user);
+
+    return { user: lastestUser };
   }
 
   async searchUsers(query: SearchUsersDto) {
-    return await this.userRepository.getUsersBySearch(
-      query.page || 1,
-      query.pageSize || 10,
-      query.query || '',
-      query.sortBy || 'id',
-      query.sortOrder || 'asc',
-    );
+    const { users, totalPages, currentPage } =
+      await this.userRepository.getUsersBySearch(
+        query.page || 1,
+        query.pageSize || 10,
+        query.query || '',
+        query.sortBy || 'id',
+        query.sortOrder || 'asc',
+      );
+    const lastUsers = users.map((user) => this.safeUser(user));
+    return { users: lastUsers, totalPages, currentPage };
   }
 
   async countUsers() {
@@ -37,11 +46,18 @@ export class UserService {
   }
 
   async filterUsers(query: FilterUsersDto) {
-    return await this.userRepository.filterUsers(query);
+    const { users, totalPages, currentPage } =
+      await this.userRepository.filterUsers(query);
+    const lastUsers = users.map((user) => this.safeUser(user));
+    return { users: lastUsers, totalPages, currentPage };
   }
 
-  async updateUser(body: UpdateUserDto) {
-    const user = await this.userRepository.updateUser(body);
-    return { user };
+  async updateUser(body: UpdateUserDto, id: string) {
+    const data = {
+      ...body,
+      id,
+    };
+    const user = await this.userRepository.updateUser(data);
+    return { user: this.safeUser(user) };
   }
 }

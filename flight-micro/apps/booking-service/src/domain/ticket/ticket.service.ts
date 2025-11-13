@@ -6,13 +6,14 @@ import { FlightSeat } from 'generated/prisma';
 import { FilterTicketDto } from './dto/filterTicket.dto';
 import { SearchTicketDto } from './dto/searchTicket.dto';
 import { addDays, subDays, startOfDay } from 'date-fns';
+import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 
 @Injectable()
 export class TicketService {
   constructor(
     private readonly ticketRepository: TicketRepository,
     private readonly prismaService: PrismaService,
-    @Inject('logging-queue') private readonly loggingQueue: ClientProxy,
+    private readonly amqpConnection: AmqpConnection,
   ) {}
   // Service methods would go here
 
@@ -80,14 +81,14 @@ export class TicketService {
       tx,
     );
 
-    this.loggingQueue.emit('ticket_created', {
-      ticketId: ticket.id,
-      passengerId,
-      flightSeatId,
-      seatNumber,
-      cancelCode,
-      bookingReference,
-    });
+    // this.loggingQueue.emit('ticket_created', {
+    //   ticketId: ticket.id,
+    //   passengerId,
+    //   flightSeatId,
+    //   seatNumber,
+    //   cancelCode,
+    //   bookingReference,
+    // });
 
     return ticket;
   }
@@ -192,9 +193,15 @@ export class TicketService {
     return { result };
   }
 
-  async searchTicketForClient(query: string) {
+  async searchTicketForClient(query?: string, email?: string) {
     const tickets =
-      await this.ticketRepository.getTicketByEmailOrBookingReference(query);
-    return { tickets };
+      await this.ticketRepository.getTicketByEmailOrBookingReference(
+        query,
+        email,
+      );
+
+    const lastTickets = tickets.map((ticket) => this.safeMapTicket(ticket));
+
+    return { tickets: lastTickets };
   }
 }

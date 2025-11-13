@@ -19,7 +19,6 @@ export class AircraftController {
   @Get('aircrafts-admin')
   ///get-aircrafts-by-search
   async getAircraftsForAdmin(@Query() query: SearchAircraftDto) {
-    console.log(query);
     return await this.aircraftService.getAircraftsForAdmin(query);
   }
 
@@ -32,7 +31,8 @@ export class AircraftController {
   @Get('count')
   // /count-aircrafts
   async countAircrafts() {
-    return await this.aircraftService.countAircrafts();
+    const count = await this.aircraftService.countAircrafts();
+    return { count };
   }
 
   @Get(':id')
@@ -55,6 +55,7 @@ export class AircraftController {
     @Body() dto: UpdateAircraftDto,
     @Param('id') id: string,
   ) {
+
     return await this.aircraftService.updateAircraft(id, dto);
   }
 }

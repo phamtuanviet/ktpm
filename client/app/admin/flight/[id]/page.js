@@ -14,7 +14,7 @@ const page = () => {
   const fetchFlight = async () => {
     try {
       const res = await flightService.getFlightById(currentId);
-      setFlight(res?.data || null);
+      setFlight(res?.data.flight || null);
     } catch (error) {
       console.error("Error fetching news:", error);
       setFlight(null);
@@ -36,11 +36,7 @@ const page = () => {
       <div className="flex-1">
         <HearderAdmin />
         <div className="p-5 flex flex-col items-center justify-between">
-          {flight && (
-            <Flight
-              data={flight}
-            />
-          )}
+          {flight && <Flight data={flight} />}
         </div>
       </div>
     </div>

@@ -109,7 +109,7 @@ const page = () => {
       };
       console.log(filterData);
       const res = await newsService.filterNews(filterData);
-      setNews(res?.data.news);
+      setNews(res?.data.listNews);
       setTotalPages(res?.data.totalPages);
     } catch (error) {
       console.error("Error fetch news:", error);

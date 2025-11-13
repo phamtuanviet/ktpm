@@ -15,21 +15,18 @@ import { SagaStatus } from '@prisma/client';
 import { RedisService } from 'src/redis/redis.service';
 import { create } from 'axios';
 import { FlightForTicketsDto } from './dto/flightsForTickets.dto';
+import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 
 @Injectable()
 export class FlightService {
   constructor(
     private readonly flightRepository: FlightRepository,
     private readonly prismaService: PrismaService,
-    @Inject('logging-queue') private readonly loggingQueue: ClientProxy,
-    @Inject('flight-booking-queue')
-    private readonly flightBookingQueue: ClientProxy,
+    private readonly amqpConnection: AmqpConnection,
     private readonly airportService: AirportService,
     private readonly aircraftService: AircraftService,
     private readonly redisService: RedisService,
   ) {}
-
-  private readonly BOOKING_PORT = 'http://localhost:5002';
 
   private buildWhere(from: string, to: string, dateValue: string) {
     const start = new Date(dateValue);
@@ -93,7 +90,7 @@ export class FlightService {
       inboundFlights = await this.flightRepository.findFlights(returnWhere);
     }
 
-    return { outbound: outboundFlights, inbound: inboundFlights };
+    return { outbound: outboundFlights, inbound: inboundFlights, tripType };
   }
 
   async generateUniqueFlightNumber(tx?: any): Promise<string> {
@@ -190,7 +187,11 @@ export class FlightService {
         seats: data.seats,
       };
 
-      this.flightBookingQueue.emit('seats.create', sagaPayLoad);
+      await this.amqpConnection.publish(
+        'flight-booking-exchange',
+        'seats.create',
+        sagaPayLoad,
+      );
 
       return createdFlight;
     });
@@ -198,7 +199,7 @@ export class FlightService {
   }
 
   async updateFlight(id: string, data: UpdateFlightDto) {
-    const { estimatedDeparture, estimatedArrival } = data;
+    const { departureTime, arrivalTime } = data;
 
     const flight = await this.flightRepository.findFlightByIdAndStatus(id, [
       'DELAYED',
@@ -210,22 +211,37 @@ export class FlightService {
     }
 
     const flightResult = await this.prismaService.$transaction(async (tx) => {
-      if (!estimatedDeparture || !estimatedArrival) {
+      if (!departureTime || !arrivalTime) {
         return flight;
       } else {
-        await this.redisService.set(`flight-temp-${flight.id}`, flight);
+        const flightSaved = {
+          id: flight.id,
+          departureTime: flight.departureTime,
+          arrivalTime: flight.arrivalTime,
+          estimatedDeparture: flight.estimatedDeparture,
+          estimatedArrival: flight.estimatedArrival,
+          sagaStatus: flight.sagaStatus,
+          status: flight.status,
+        };
+        if (departureTime >= arrivalTime) {
+          throw new HttpException(
+            'Departure time must be before arrival time',
+            500,
+          );
+        }
+        await this.redisService.set(`flight-temp-${flight.id}`, flightSaved);
         const dateValue = {
-          estimatedDeparture,
-          estimatedArrival,
+          estimatedDeparture: departureTime,
+          estimatedArrival: arrivalTime,
           sagaStatus: SagaStatus.PENDING,
           status: 'DELAYED',
           id,
         };
         if (
-          (estimatedDeparture < flight.departureTime &&
+          (departureTime < flight.departureTime &&
             flight.estimatedDeparture == null) ||
           (flight.estimatedDeparture != null &&
-            estimatedDeparture < flight.estimatedDeparture)
+            arrivalTime < flight.estimatedDeparture)
         ) {
           return new HttpException(
             'Estimated departure time cannot be earlier than scheduled departure time',
@@ -242,7 +258,11 @@ export class FlightService {
           seats: data.seats,
         };
 
-        this.flightBookingQueue.emit('seats.update', sagaPayLoad);
+        await this.amqpConnection.publish(
+          'flight-booking-exchange',
+          'seats.update',
+          sagaPayLoad,
+        );
 
         return flightData;
       }
@@ -273,7 +293,7 @@ export class FlightService {
 
   async getFlightById(id: string) {
     const flight = await this.flightRepository.getFlightById(id);
-    return flight;
+    return { flight };
   }
 
   async getFlightsFilterForAdmin(dto: FilterFlightDto) {
@@ -288,11 +308,11 @@ export class FlightService {
 
   async countFlights() {
     const count = await this.flightRepository.countFlights();
-    return count;
+    return { count };
   }
 
   async countStatusFlights() {
     const count = await this.flightRepository.countStatus();
-    return count;
+    return { count };
   }
 }

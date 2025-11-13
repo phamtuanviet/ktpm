@@ -37,7 +37,6 @@ const News = () => {
   const [slideWidth, setSlideWidth] = useState(100 / slidesPerView);
   const [news, setNews] = useState([]);
 
-
   // xem tin tức khi bấm vào
   const watchNews = (id) => {
     router.push(`/news/${id}`);

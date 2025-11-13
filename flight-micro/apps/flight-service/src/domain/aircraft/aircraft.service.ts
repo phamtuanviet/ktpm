@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, Injectable } from '@nestjs/common';
 import { AircraftRepository } from './aircraft.repository';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { SearchAircraftDto } from './dto/searchAircarft.dto';
@@ -45,7 +45,19 @@ export class AircraftService {
   }
 
   async updateAircraft(id: string, dto: UpdateAircraftDto) {
-    return await this.aircraftRepository.updateAircraft(id, dto);
+
+    const aircraft = await this.aircraftRepository.searchAircraftByName(
+      dto.name,
+    );
+    if (!aircraft || aircraft.id == id) {
+      const result = await this.aircraftRepository.updateAircraft(id, dto);
+      return { aircraft: result };
+    } else {
+      return new HttpException(
+        'Aircraft name is exsting or something went wrong',
+        400,
+      );
+    }
   }
 
   async deleteAircraft(id: string) {

@@ -46,7 +46,7 @@ const page = () => {
       <td className="hidden md:table-cell font-sans py-4">{item.name}</td>
       <td className="hidden lg:table-cell font-sans">{item.email}</td>
       <td className="hidden lg:table-cell font-sans">
-        {item.isAccountVerified ? "Yes" : "No"}
+        {item.isVerified ? "Yes" : "No"}
       </td>
       <td className="font-sans">{item.role}</td>
       <td>
@@ -114,8 +114,8 @@ const page = () => {
   };
 
   const submitUpdate = async (updatedValues) => {
-    const { id, role, isAccountVerified } = updatedValues;
-    const updatedData = { role, isAccountVerified };
+    const { id, role, isVerified } = updatedValues;
+    const updatedData = { role, isVerified };
     await userService.updateUser(id, updatedData);
     fetchData();
     closeModal();

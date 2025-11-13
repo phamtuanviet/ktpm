@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Req } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { VerifyOtpDto } from './dto/verifyEmail.dto';
@@ -42,7 +42,7 @@ export class AuthController {
 
   @Post('logout')
   async logout(@Body() body: LogoutDto, @Req() req: Request) {
-    return await this.authService.logout(body.id, req.cookies['refresh_token']);
+    return await this.authService.logout(body.id, req.cookies['refreshToken']);
   }
 
   @Post('request-reset-password')
@@ -65,15 +65,22 @@ export class AuthController {
   }
 
   @Post('google-login')
-  async googleLogin(@Body() body: GoogleLoginDto) {
-    return await this.authService.googleLogin(body);
+  async googleLogin(@Body() body: GoogleLoginDto, @Req() req: Request) {
+    return await this.authService.googleLogin(
+      body,
+      req.headers['x-device-info'] as string,
+    );
   }
 
   @Post('refresh-access-token')
-  async refreshAccessToken(@Body() body: LogoutDto, @Req() req: Request) {
+  async refreshAccessToken(@Req() req: Request) {
     return await this.authService.refreshAccessToken(
-      body.id,
-      req.cookies['refresh_token'],
+      req.cookies['refreshToken'],
     );
+  }
+
+  @Get('google-login-authenticate')
+  async authenticateWithGoogle(@Req() req: Request) {
+    return await this.authService.authenticateWithGoogle(req.cookies['refreshToken']);
   }
 }

@@ -10,7 +10,9 @@ import * as jwt from 'jsonwebtoken';
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
-    const req = context.switchToHttp().getRequest<Request & { user?: any }>();
+    const req = context
+      .switchToHttp()
+      .getRequest<Request & { userCurrent?: any }>();
 
     const authHeader = req.headers['authorization'];
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -27,7 +29,7 @@ export class JwtAuthGuard implements CanActivate {
 
     try {
       const decoded = jwt.verify(token, secret);
-      req.user = decoded;
+      req.userCurrent = decoded;
       return true;
     } catch (error) {
       if (error instanceof jwt.JsonWebTokenError) {

@@ -1,5 +1,6 @@
 "use client";
 import Loading from "@/app/_components/Loading";
+import bookingService from "@/lib/api/booking";
 import ticketService from "@/lib/api/ticket";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
@@ -35,8 +36,7 @@ const Page = () => {
     };
     setIsLoading(true);
 
-    const res = await ticketService.createTicketClient(bodyRequest);
-    console.log(res)
+    const res = await bookingService.bookingVerify(bodyRequest);
     setIsLoading(false);
     if (res?.success) {
       setCheck(true);
@@ -49,7 +49,6 @@ const Page = () => {
     setOtp(e.target.value);
     if (error) setError("");
   };
-  console.log(data);
   return (
     <>
       {!check && (

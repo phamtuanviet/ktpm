@@ -36,7 +36,6 @@ async function main() {
     const result = await prisma.airport.createMany({
       data: airports
     });
-    console.log(`Đã thêm ${result.count} bản ghi vào bảng Airport`);
   } catch (error) {
     console.error('Có lỗi xảy ra:', error);
   } finally {

@@ -2,6 +2,7 @@
 import Footer from "@/app/_components/Footer";
 import FormPassenger from "@/app/_components/FormPassenger";
 import Header from "@/app/_components/Header";
+import bookingService from "@/lib/api/booking";
 import ticketService from "@/lib/api/ticket";
 import { Divide, LocateFixed, MapPinCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -12,9 +13,9 @@ const page = () => {
   const [data, setData] = useState(null);
   const [priceData, setPriceData] = useState(null);
   const router = useRouter();
-  const { user, isAuthenticated } = useSelector((state) => state.auth);
+  const { user, isLogin } = useSelector((state) => state.auth);
   const [checkLogin, isCheckLogin] = useState(() => {
-    if (user && isAuthenticated) return true;
+    if (isLogin) return true;
     return false;
   });
 
@@ -61,21 +62,25 @@ const page = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(data);
+    const allPassengers = [
+      ...passengers.adults.map((p) => ({ passengerType: "ADULT", ...p })),
+      ...passengers.children.map((p) => ({ passengerType: "CHILD", ...p })),
+      ...passengers.infants.map((p) => ({ passengerType: "INFANT", ...p })),
+    ];
+
     const dataPassengers = {
       outboundFlightId: data.selectedOutbound.flight.id,
       outboundSeatClass: data.selectedOutbound.seatClass,
       inboundFlightId: data?.selectedInbound?.flight?.id || null,
       inboundSeatClass: data?.selectedInbound?.seatClass || null,
-      passengers,
+      passengers: allPassengers,
       email,
     };
     const bodyRequest = {
       ...dataPassengers,
-      step: "sendOtp",
     };
     sessionStorage.setItem("dataPassengers", JSON.stringify(dataPassengers));
-    await ticketService.createTicketClient(bodyRequest);
+    await bookingService.bookingSign();
     router.push("/search-flight/otp");
   };
 

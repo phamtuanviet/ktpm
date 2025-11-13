@@ -106,7 +106,7 @@ const TicketDes = ({ data }) => {
               <p className="font-light text-xl">
                 Passenger Type:{" "}
                 <span className="font-bold text-[1.5xl]">
-                  {`${data.passengerType}`}
+                  {`${data.passenger.passengerType}`}
                 </span>
               </p>
             </div>

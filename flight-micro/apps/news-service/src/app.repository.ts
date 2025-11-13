@@ -92,10 +92,14 @@ export class AppRepository {
   ) {
     const skip = (page - 1) * pageSize;
 
-    const searchCondition: any = {};
+    const searchCondition: any = {
+      isDeleted: false,
+    };
     if (query) {
       searchCondition.OR = [
         { title: { contains: query, mode: 'insensitive' } },
+        { id: { startsWith: query } },
+        { content: { startsWith: query } },
       ];
     }
 
@@ -129,8 +133,7 @@ export class AppRepository {
     const skip = (pageNum - 1) * pageSizeNum;
 
     const operatorMap = {
-      id: (val: string) => ({ equal: val }),
-      flightId: (val: string) => ({ equal: val }),
+      id: (val: string) => ({ startsWith: val }),
       title: (val: string) => ({ contains: val, mode: 'insensitive' }),
       isPublished: (val: string) => ({ equals: val === 'true' }),
     };
@@ -147,6 +150,8 @@ export class AppRepository {
 
     if (!Object.keys(where).length)
       throw new Error('At least one filter param is required');
+
+    where.isDeleted = false;
 
     const [news, totalNews] = await this.prismaService.$transaction([
       this.prismaService.news.findMany({

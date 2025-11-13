@@ -12,12 +12,12 @@ export class UpdateFlightDto {
   @IsOptional()
   @Type(() => Date)
   @IsDate()
-  estimatedDeparture?: Date;
+  departureTime?: Date;
 
   @IsOptional()
   @Type(() => Date)
   @IsDate()
-  estimatedArrival?: Date;
+  arrivalTime?: Date;
 
   @IsArray()
   @ValidateNested({ each: true })

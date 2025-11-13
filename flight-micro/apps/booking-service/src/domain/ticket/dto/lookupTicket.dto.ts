@@ -9,7 +9,7 @@ import {
 } from 'class-validator';
 
 export class LookupTicketDto {
-  @IsNotEmpty()
   @IsString()
-  query: string;
+  @IsOptional()
+  query?: string;
 }

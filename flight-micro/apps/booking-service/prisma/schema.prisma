@@ -72,7 +72,9 @@ model FlightSeat {
   createdAt                 DateTime   @default(now())
 
   // Đảm bảo không trùng loại ghế trên cùng 1 chuyến bay
+  @@unique([flightId, seatClass])
   @@index([flightId])
+  
 }
 
 

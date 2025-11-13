@@ -10,16 +10,18 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { logoutUser } from "@/redux/features/authSlice";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import Sidebar from "../_components/Sidebar";
 import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 const HearderAdmin = () => {
   const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
+
   const router = useRouter();
   const handleLogout = () => {
-    dispatch(logoutUser());
+    dispatch(logoutUser({ id: user.id }));
     localStorage.removeItem("persist:root.auth");
     router.push("/");
   };

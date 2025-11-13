@@ -13,7 +13,7 @@ const page = () => {
   const fetchAircraft = async () => {
     try {
       const res = await aircraftService.getAircraftById(currentId);
-      setAircraft(res?.data || null);
+      setAircraft(res?.aircraft || null);
     } catch (error) {
       console.error("Error fetching news:", error);
       setAircraft(null);
@@ -58,12 +58,12 @@ const page = () => {
                   </span>
                 </p>
               </div>
-              <div className="flex flex-col w-full gap-2">
+              {/* <div className="flex flex-col w-full gap-2">
                 {aircraft.flights.length > 0 &&
                   aircraft.flights.map((t) => (
                     <FlightAircraft key={t.id} data={t} />
                   ))}
-              </div>
+              </div> */}
             </div>
           )}
         </div>

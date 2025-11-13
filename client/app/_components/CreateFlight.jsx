@@ -96,7 +96,6 @@ const CreateFlight = ({
               }
             : s
         );
-        console.log(next.seats);
       } else {
         next[name] =
           type === "file"

@@ -1,15 +1,61 @@
 import axios from "axios";
 import { toast } from "sonner";
+import { setUser, setIsLogin } from "@/redux/features/authSlice";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL + "/ticket";
+const baseURL = process.env.NEXT_PUBLIC_API_URL;
 
 const ticketApi = axios.create({
   baseURL: API_BASE_URL,
+  headers: {
+    "Content-Type": "application/json",
+  },
 });
 
+ticketApi.interceptors.request.use((config) => {
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("accessToken");
+    if (token && config.headers) {
+      config.headers["Authorization"] = `Bearer ${token}`;
+    }
+  }
+  return config;
+});
+
+// Interceptor xử lý lỗi chung
 ticketApi.interceptors.response.use(
-  (response) => response.data,
-  (error) => {
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    // Token expired và chưa retry
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      try {
+        // Gọi API refresh token (cookie tự gửi)
+        const res = await axios.post(
+          `${baseURL}/auth/refresh-access-token`,
+          {},
+          { withCredentials: true }
+        );
+
+        const newAccessToken = res.data.accessToken;
+        localStorage.setItem("accessToken", newAccessToken);
+
+        // Retry request với token mới
+        originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
+        return ticketApi(originalRequest);
+      } catch (refreshError) {
+        // Nếu refresh cũng fail → logout hoặc redirect login
+        store.dispatch(setUser(null));
+        store.dispatch(setIsLogin(false));
+        // Nếu refresh cũng fail → logout hoặc redirect login
+        localStorage.removeItem("accessToken");
+        return Promise.reject(refreshError);
+      }
+    }
+
     return Promise.reject(error);
   }
 );
@@ -17,7 +63,7 @@ ticketApi.interceptors.response.use(
 const ticketService = {
   getAllTicket: async () => {
     try {
-      return await ticketApi.get("/", { withCredentials: true });
+      return await ticketApi.get("/");
     } catch (error) {
       toast.error(error?.response?.data?.message || "Something went wrong");
       return null;
@@ -31,7 +77,6 @@ const ticketService = {
           skip,
           take,
         },
-        withCredentials: true,
       });
     } catch (error) {
       toast.error(error?.response?.data?.message || "Something went wrong");
@@ -44,9 +89,8 @@ const ticketService = {
     try {
       filterData.page = filterData?.page || 1;
       filterData.pageSize = filterData?.pageSize || 10;
-      return await ticketApi.get("/filter", {
+      return await ticketApi.get("/tickets-filter-admin", {
         params: filterData,
-        withCredentials: true,
       });
     } catch (error) {
       toast.error(error?.response?.data?.message || "Something went wrong");
@@ -57,7 +101,7 @@ const ticketService = {
   //
   getTicketsBySearch: async (page, pageSize = 10, query, sortBy, sortOrder) => {
     try {
-      const data = await ticketApi.get(`/get-tickets-by-search`, {
+      const data = await ticketApi.get(`/tickets-admin`, {
         params: {
           page,
           pageSize,
@@ -65,7 +109,6 @@ const ticketService = {
           sortBy,
           sortOrder,
         },
-        withCredentials: true,
       });
       return data;
     } catch (error) {
@@ -77,41 +120,36 @@ const ticketService = {
   //
   getTicketById: async (id) => {
     try {
-      return await ticketApi.get(`/${id}`, { withCredentials: true });
+      return await ticketApi.get(`/${id}`);
     } catch (error) {
       toast.error(error?.response?.data?.message || "Something went wrong");
       return null;
     }
   },
 
-  //
+  // xx
   createTicket: async (ticketData) => {
     try {
-      return await ticketApi.post("/", ticketData, { withCredentials: true });
+      return await ticketApi.post("/", ticketData);
     } catch (error) {
       toast.error(error?.response?.data?.message || "Something went wrong");
       return null;
     }
   },
 
-  //
+  // //
   createTicketClient: async (ticketData) => {
     try {
-      return await ticketApi.post("/ticket-client", ticketData, {
-        withCredentials: true,
-      });
+      return await ticketApi.post("/ticket-client", ticketData);
     } catch (error) {
       toast.error(error?.response?.data?.message || "Something went wrong");
       return null;
     }
   },
 
-  
   updateTicket: async (id, updateData) => {
     try {
-      return await ticketApi.put(`/${id}`, updateData, {
-        withCredentials: true,
-      });
+      return await ticketApi.put(`/${id}`, updateData);
     } catch (error) {
       toast.error(error?.response?.data?.message || "Something went wrong");
       return null;
@@ -121,9 +159,7 @@ const ticketService = {
   //
   cancelTicket: async (data) => {
     try {
-      const res = await ticketApi.put(`/cancel`, data, {
-        withCredentials: true,
-      });
+      const res = await ticketApi.put(`/cancel`, data);
       toast.success("Cancel successfully");
       return res;
     } catch (error) {
@@ -134,7 +170,7 @@ const ticketService = {
 
   deleteTicket: async (id) => {
     try {
-      const data = await ticketApi.delete(`/${id}`, { withCredentials: true });
+      const data = await ticketApi.delete(`/${id}`);
       toast.success("delete success");
       return data;
     } catch (error) {
@@ -145,8 +181,10 @@ const ticketService = {
   //
   lookUpTicket: async (search = "") => {
     try {
-      const res = await ticketApi.get(`/look-up/${search}`, {
-        withCredentials: true,
+      const res = await ticketApi.get(`/tickets-lookup-client`, {
+        params: {
+          query: search,
+        },
       });
       return res;
     } catch (error) {
@@ -157,9 +195,7 @@ const ticketService = {
 
   countAllTicket: async () => {
     try {
-      const res = await ticketApi.get("/count-all-ticket", {
-        withCredentials: true,
-      });
+      const res = await ticketApi.get("/count-all-ticket");
       return res;
     } catch (error) {
       toast.error(error?.response?.data?.message || "Something went wrong");
@@ -169,9 +205,7 @@ const ticketService = {
 
   countCancelledTicket: async () => {
     try {
-      const res = await ticketApi.get("/count-cancelled-ticket", {
-        withCredentials: true,
-      });
+      const res = await ticketApi.get("/count-cancelled-ticket");
       return res;
     } catch (error) {
       toast.error(error?.response?.data?.message || "Something went wrong");
@@ -182,9 +216,17 @@ const ticketService = {
   //
   countTicketStats: async (status) => {
     try {
-      const res = await ticketApi.get("count-ticket-stats", {
-        withCredentials: true,
-      });
+      const res = await ticketApi.get("count-tickets-stats");
+      return res;
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Something went wrong");
+      return null;
+    }
+  },
+
+  getRevenue: async () => {
+    try {
+      const res = await ticketApi.get("revenue-stats");
       return res;
     } catch (error) {
       toast.error(error?.response?.data?.message || "Something went wrong");
