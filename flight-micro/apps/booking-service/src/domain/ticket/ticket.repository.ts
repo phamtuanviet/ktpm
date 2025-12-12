@@ -152,22 +152,22 @@ export class TicketRepository {
           passenger: {
             is: {
               OR: [
-                { email: { startsWith: query } },
-                { fullName: { startsWith: query } },
+                { email: { startsWith: query, mode: 'insensitive' } },
+                { fullName: { startsWith: query, mode: 'insensitive' } },
               ],
             },
           },
           flightSeat: {
             is: {
               OR: [
-                { flightId: { startsWith: query } },
-                { id: { startsWith: query } },
+                { flightId: { startsWith: query, mode: 'insensitive' } },
+                { id: { startsWith: query, mode: 'insensitive' } },
               ],
             },
           },
-          seatNumber: { startsWith: query },
-          bookingReference: { startsWith: query },
-          id: { startsWith: query },
+          seatNumber: { startsWith: query, mode: 'insensitive' },
+          bookingReference: { startsWith: query, mode: 'insensitive' },
+          id: { startsWith: query, mode: 'insensitive' },
         },
       ];
     }

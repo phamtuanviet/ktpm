@@ -42,11 +42,11 @@ enum SagaStatus {
 
 model Airport {
   id                  String      @id @default(uuid())
-  name                String   @db.VarChar(150)
-  iataCode            String   @unique @db.VarChar(3)
-  icaoCode            String   @unique @db.VarChar(4)
+  name                String   @db.Citext
+  iataCode            String    @unique  @db.Citext
+  icaoCode            String   @unique @db.Citext
   country             String   @db.VarChar(100)
-  city                String   @db.VarChar(100)
+  city                String   @db.Citext
   latitude            Decimal  @db.Decimal(10, 8)
   longitude           Decimal  @db.Decimal(11, 8)
   type                String   @db.VarChar(50)
@@ -60,8 +60,8 @@ model Airport {
 
 model Aircraft {
   id                  String   @id @default(uuid())
-  name                String   @unique @db.VarChar(50)
-  manufacturer        String   @db.VarChar(50)
+  name          String      @unique @db.Citext
+  manufacturer        String   @db.Citext
   flights             Flight[] @relation("Aircraft")
   isDeleted          Boolean  @default(false)
   deletedAt          DateTime?
@@ -71,13 +71,13 @@ model Aircraft {
 
 model Flight {
   id                    String      @id @default(uuid())
-  flightNumber          String      @unique @db.VarChar(10)
+  flightNumber          String     @db.Citext @unique
   
   departureAirport      Airport     @relation("DepartureAirport", fields: [departureAirportId], references: [id], onDelete: Restrict)
-  departureAirportId    String         @map("departure_airport_id")
+  departureAirportId    String    @db.Citext     @map("departure_airport_id")
   
   arrivalAirport        Airport     @relation("ArrivalAirport", fields: [arrivalAirportId], references: [id], onDelete: Restrict)
-  arrivalAirportId      String         @map("arrival_airport_id")
+  arrivalAirportId      String      @db.Citext   @map("arrival_airport_id")
   
   departureTime         DateTime
   arrivalTime           DateTime

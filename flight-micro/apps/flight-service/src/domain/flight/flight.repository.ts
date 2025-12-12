@@ -14,7 +14,7 @@ export class FlightRepository {
       where: {
         sagaStatus: SagaStatus.CONFIRMED,
         flightNumber: {
-          startsWith: query,
+          startsWith: query, mode: 'insensitive'
         },
       },
       take: 10,
@@ -42,7 +42,7 @@ export class FlightRepository {
             is: {
               OR: [
                 { name: { startsWith: query } },
-                { iataCode: { startsWith: query } },
+                { iataCode: { startsWith: query} },
                 { icaoCode: { startsWith: query } },
               ],
             },
@@ -133,18 +133,18 @@ export class FlightRepository {
     const operatorMap = {
       flightNumber: (val: string) => ({ flightNumber: { startsWith: val } }),
       status: (val: FlightStatus) => ({ status: { equals: val } }),
-      id: (val: string) => ({ id: { startsWith: val } }),
+      id: (val: string) => ({ id: { startsWith: val} }),
       departureAirport: (val: string) => ({
         departureAirport: {
           name: {
-            startsWith: val,
+            startsWith: val
           },
         },
       }),
       arrivalAirport: (val: string) => ({
         arrivalAirport: {
           name: {
-            startsWith: val,
+            startsWith: val
           },
         },
       }),
@@ -162,6 +162,13 @@ export class FlightRepository {
         end.setDate(end.getDate() + 1);
         return { arrivalTime: { gte: start, lt: end } };
       },
+      aircraft: (val: string) => ({
+        aircraft: {
+          name: {
+            startsWith: val
+          },
+        },
+      }),
     };
 
     const where = Object.entries(filters)

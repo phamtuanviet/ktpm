@@ -15,13 +15,17 @@ datasource db {
 
 model News {
   id           String @id @default(uuid())
-  title        String
-  content      String   
+  title        String  @db.Citext
+  content      String   @db.Text
   thumbnailUrl String?
   isPublished  Boolean  @default(false)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   isDeleted    Boolean  @default(false)
   deletedAt    DateTime?
+  @@index([isPublished,title])
+  @@index([isDeleted])
+  @@index([title])
+
 }
 

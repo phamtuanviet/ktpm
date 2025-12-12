@@ -24,8 +24,8 @@ export class AircraftRepository {
     return db.aircraft.findMany({
       where: {
         OR: [
-          { name: { contains: q, mode: 'insensitive' } },
-          { manufacturer: { contains: q, mode: 'insensitive' } },
+          { name: { startsWith: q, mode: 'insensitive'} },
+          { manufacturer: { startsWith: q, mode: 'insensitive' } },
         ],
       },
       take: 10,
@@ -53,9 +53,9 @@ export class AircraftRepository {
     const searchCondition: any = {};
     if (query) {
       searchCondition.OR = [
-        { id: { startsWith: query, mode: 'insensitive' } },
-        { name: { startsWith: query, mode: 'insensitive' } },
-        { manufacturer: { startsWith: query, mode: 'insensitive' } },
+        { id: { startsWith: query, mode: 'insensitive'} },
+        { name: { startsWith: query, mode: 'insensitive'} },
+        { manufacturer: { startsWith: query, mode: 'insensitive'} },
       ];
     }
     const orderByOption: Prisma.AircraftOrderByWithRelationInput = sortBy
@@ -88,9 +88,9 @@ export class AircraftRepository {
     const skip = (pageNum - 1) * pageSizeNum;
 
     const operatorMap = {
-      id: (val: string) => ({ startsWith: val }),
-      name: (val: string) => ({ startsWith: val }),
-      manufacturer: (val: string) => ({ startsWith: val }),
+      id: (val: string) => ({ startsWith: val, mode: 'insensitive' }),
+      name: (val: string) => ({ startsWith: val, mode: 'insensitive' }),
+      manufacturer: (val: string) => ({ startsWith: val, mode: 'insensitive' }),
     };
 
     const where = Object.entries(filters)

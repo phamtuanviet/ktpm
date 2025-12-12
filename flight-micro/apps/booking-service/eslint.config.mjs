@@ -6,7 +6,7 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
-    ignores: ['eslint.config.mjs'],
+    ignores: ['eslint.config.mjs', 'ecosystem.config.js'],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
@@ -34,24 +34,6 @@ export default tseslint.config(
       '@typescript-eslint/no-unsafe-call': 'off',
       '@typescript-eslint/no-unsafe-member-access': 'off',
       '@typescript-eslint/no-unsafe-return': 'off',
-      '@typescript-eslint/no-unused-vars': [
-        'warn', // Có thể để 'error' hoặc 'off'
-        {
-          argsIgnorePattern: '^\_', // Cho phép các biến không dùng có tiền tố '_'
-          varsIgnorePattern: '^\_',
-          caughtErrorsIgnorePattern: '^\_',
-        },
-      ],
-
-      // 2. Vô hiệu hóa quy tắc gốc của ESLint
-      'no-unused-vars': [
-        'warn', // Có thể để 'error' hoặc 'off'
-        {
-          argsIgnorePattern: '^\_',
-          varsIgnorePattern: '^\_',
-          caughtErrorsIgnorePattern: '^\_',
-        },
-      ],
     },
   },
 );

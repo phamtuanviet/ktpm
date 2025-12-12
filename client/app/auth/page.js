@@ -24,7 +24,6 @@ import {
   registerUser,
   sendVerifyOtp,
 } from "@/redux/features/authSlice";
-import { setIsRegisteredFalse } from "@/redux/features/authSlice";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -35,9 +34,7 @@ export default function AuthForm() {
   const [isLogin, setIsLogin] = useState(
     searchParams.get("isLogin") === "true"
   );
-  useEffect(() => {
-    dispatch(setIsRegisteredFalse());
-  }, [dispatch]);
+
 
   const {
     user,

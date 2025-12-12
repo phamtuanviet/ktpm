@@ -35,9 +35,9 @@ export class FlightService {
 
     return {
       departureAirport: {
-        is: { name: { contains: from, mode: 'insensitive' } },
+        is: { name: { startsWith: from } },
       },
-      arrivalAirport: { is: { name: { contains: to, mode: 'insensitive' } } },
+      arrivalAirport: { is: { name: { startsWith: to } } },
       OR: [
         { status: 'SCHEDULED', departureTime: { gte: start, lt: end } },
         { status: 'DELAYED', estimatedDeparture: { gte: start, lt: end } },

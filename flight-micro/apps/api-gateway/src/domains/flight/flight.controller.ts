@@ -19,8 +19,8 @@ export class FlightController {
   constructor(private readonly flightService: FlightService) {}
   private readonly baseUrl = SERVICES.FLIGHT_SERVICE + '/api/flight';
 
-  @Roles('ADMIN')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  // @Roles('ADMIN')
+  // @UseGuards(JwtAuthGuard, RolesGuard)
   @Post('')
   async createFlightByAdmin(@Req() req: Request, @Res() res: Response) {
     const { flight } = await this.flightService.createFlightByAdmin(req);
@@ -54,8 +54,8 @@ export class FlightController {
     });
   }
 
-  @Roles('ADMIN')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  // @Roles('ADMIN')
+  // @UseGuards(JwtAuthGuard, RolesGuard)
   @Get('flights-admin')
   ///get-flights-by-search
   async getFlightsAdmin(@Req() req: Request, @Res() res: Response) {
@@ -69,8 +69,8 @@ export class FlightController {
     });
   }
 
-  @Roles('ADMIN')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  // @Roles('ADMIN')
+  // @UseGuards(JwtAuthGuard, RolesGuard)
   @Get('flights-filter-admin')
   async getFlightsFilterForAdmin(@Req() req: Request, @Res() res: Response) {
     const { flights, totalPages, currentPage } =
@@ -95,8 +95,8 @@ export class FlightController {
     });
   }
 
-  @Roles('ADMIN')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  // @Roles('ADMIN')
+  // @UseGuards(JwtAuthGuard, RolesGuard)
   @Get('count')
   async countFlights(@Req() req: Request, @Res() res: Response) {
     const { count } = await this.flightService.countFlights(req);

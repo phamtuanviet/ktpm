@@ -19,8 +19,8 @@ export class AircraftController {
     private readonly aircraftService: AircraftService,
   ) {}
 
-  @Roles('ADMIN')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  // @Roles('ADMIN')
+  // @UseGuards(JwtAuthGuard, RolesGuard)
   @Get('aircrafts-flight-admin/:q')
   async getAircraftsFlightAdmin(@Req() req: Request, @Res() res: Response) {
     const { aircrafts } =

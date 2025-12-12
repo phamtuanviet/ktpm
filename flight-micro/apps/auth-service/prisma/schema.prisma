@@ -16,26 +16,31 @@ enum Role {
 
 model AuthUser {
   id           String @id @default(uuid())
-  email        String @unique
-  name         String
+  email        String @unique @db.Citext
+  name         String @db.Citext
   password     String?
   provider     String?
   providerId   String? 
   isVerified   Boolean @default(false)
   createdAt    DateTime @default(now())
   isDeleted    Boolean @default(false)
-  role         Role    @default(USER)
+  role         Role @default(USER)
   deletedAt    DateTime?
   RefreshTokens RefreshToken[]
+  @@index([email])
+  @@index([role])
+  @@index([name])
 }
 
 model RefreshToken {
   id         String   @id @default(uuid())
   userId     String
-  tokenHash  String   @unique
+  tokenHash  String   @unique @db.Text
   deviceInfo String?
   expiresAt  DateTime
   revoked    Boolean  @default(false)
   createdAt  DateTime @default(now())
   user       AuthUser @relation(fields: [userId], references: [id])
+  @@index([userId])
+  @@index([tokenHash])
 }

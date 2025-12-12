@@ -1,14 +1,12 @@
 import { Module } from '@nestjs/common';
 import { PrismaModule } from './prisma/prisma.module';
-import { RmqModule } from './rbmq/rmq.module';
 import { RedisModule } from './redis/redis.module';
 import { ConfigModule } from '@nestjs/config';
 import { TicketModule } from './domain/ticket/ticket.module';
 import { PassengerModule } from './domain/passenger/passenger.module';
 import { FlightSeatModule } from './domain/flightSeat/flightSeat.module';
 import { BookingModule } from './domain/booking/booking.module';
-import { RmqBindingModule } from './setup/rmq-binding.module';
-import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
+
 import { SharedRabbitModule } from './rbmq/shared-rabbit.module';
 
 @Module({

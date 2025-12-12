@@ -1,0 +1,20 @@
+config:
+  target: "http://localhost:5000"
+  phases:
+    - duration: 60         # chạy test trong 60 giây
+      arrivalRate:   150 # bắt đầu 150 users/giây
+        # tăng dần lên 300 users/giây
+scenarios:
+  - name: "Real user load test"
+    flow:
+      - get:
+          url: "/api/news/get-lastest?skip=0&take=5"
+      - think: 3   # pause 1 giây
+      - get:
+          url: "/api/airport/airports-client/Noi"
+      - think: 3
+      - get:
+          url: "/api/airport/airports-client/Tan"
+      - think: 3
+      - get:
+          url: "/api/flight/flights-client?tripType=oneway&departureAirport=Noi+Bai+International+Airport&arrivalAirport=Tan+Son+Nhat+International+Airport&startDate=2025-12-27T17:00:00.000Z&returnDate=2025-12-28T17:00:00.000Z&adults=1&children=0&infants=0"

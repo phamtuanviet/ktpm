@@ -97,9 +97,9 @@ export class AppRepository {
     };
     if (query) {
       searchCondition.OR = [
-        { title: { contains: query, mode: 'insensitive' } },
-        { id: { startsWith: query } },
-        { content: { startsWith: query } },
+        { title: { startsWith: query, mode: 'insensitive' } },
+        { id: { startsWith: query , mode: 'insensitive'} },
+        { content: { startsWith: query , mode: 'insensitive'} },
       ];
     }
 
@@ -133,8 +133,8 @@ export class AppRepository {
     const skip = (pageNum - 1) * pageSizeNum;
 
     const operatorMap = {
-      id: (val: string) => ({ startsWith: val }),
-      title: (val: string) => ({ contains: val, mode: 'insensitive' }),
+      id: (val: string) => ({ startsWith: val , mode: 'insensitive'}),
+      title: (val: string) => ({ startsWith: val , mode: 'insensitive'}),
       isPublished: (val: string) => ({ equals: val === 'true' }),
     };
 

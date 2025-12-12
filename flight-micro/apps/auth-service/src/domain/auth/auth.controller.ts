@@ -42,6 +42,9 @@ export class AuthController {
 
   @Post('logout')
   async logout(@Body() body: LogoutDto, @Req() req: Request) {
+    if (!req.cookies['refreshToken']) {
+      return { message: 'Logout successful' };
+    }
     return await this.authService.logout(body.id, req.cookies['refreshToken']);
   }
 
@@ -81,6 +84,8 @@ export class AuthController {
 
   @Get('google-login-authenticate')
   async authenticateWithGoogle(@Req() req: Request) {
-    return await this.authService.authenticateWithGoogle(req.cookies['refreshToken']);
+    return await this.authService.authenticateWithGoogle(
+      req.cookies['refreshToken'],
+    );
   }
 }

@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import { FilterUsersDto } from './dto/filterUsers.dto';
-type QueryMode = Prisma.QueryMode;
 type UserWhereInput = Prisma.AuthUserWhereInput;
 
 @Injectable()
@@ -26,8 +25,8 @@ export class UserRepository {
       ? {
           OR: [
             { id: { equals: query } },
-            { name: { contains: query, mode: 'insensitive' as QueryMode } },
-            { email: { contains: query, mode: 'insensitive' as QueryMode } },
+            { name: { startsWith: query, mode: Prisma.QueryMode.insensitive} },
+            { email: { startsWith: query, mode: Prisma.QueryMode.insensitive} },
           ],
         }
       : {};
@@ -57,12 +56,12 @@ export class UserRepository {
   }
 
   async filterUsers(query: FilterUsersDto) {
-    const operatorMap: Record<string, 'equals' | 'contains'> = {
+    const operatorMap: Record<string, 'equals' | 'startsWith'> = {
       id: 'equals',
-      email: 'contains',
+      email: 'startsWith',
       role: 'equals',
       isVerified: 'equals',
-      name: 'contains',
+      name: 'startsWith',
     };
     const page = query.page || 1;
     const pageSize = query.pageSize || 10;
@@ -77,10 +76,9 @@ export class UserRepository {
 
       const operator = operatorMap[key];
 
-      if (operator === 'contains') {
+      if (operator === 'startsWith') {
         where[key] = {
-          contains: parsed,
-          mode: 'insensitive' as Prisma.QueryMode,
+          startsWith: parsed, mode: 'insensitive',
         };
       } else {
         where[key] = {

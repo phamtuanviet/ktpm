@@ -18,6 +18,11 @@ export class FilterFlightDto {
   @IsString()
   id?: string;
 
+  
+  @IsOptional()
+  @IsString()
+  aircraft?: string;
+
   @IsOptional()
   @IsString()
   departureAirport?: string;

@@ -38,32 +38,32 @@ const Ticket = ({ data, handleCancel }) => {
             </p>
             <p className="font-light text-xl">
               Departure Airport:{" "}
-              <span className="font-bold text-[1.5xl]">{`${data.flight.departureAirport.name}`}</span>
+              <span className="font-bold text-[1.5xl]">{`${data.flight?.departureAirport.name}` || "None"}</span>
             </p>
             <p className="font-light text-xl">
               Arrival Airport:{" "}
-              <span className="font-bold text-[1.5xl]">{`${data.flight.arrivalAirport.name}`}</span>
+              <span className="font-bold text-[1.5xl]">{`${data.flight?.arrivalAirport.name}` || "None"}</span>
             </p>
             <p className="font-light text-xl">
               Flight Number:{" "}
-              <span className="font-bold text-[1.5xl]">{`${data.flight.flightNumber}`}</span>
+              <span className="font-bold text-[1.5xl]">{`${data.flight?.flightNumber}` || "None"}</span>
             </p>
           </div>
           <div className="flex flex-col gap-3 text-start">
             <p className="font-light text-xl">
               Departure time:{" "}
               <span className="font-bold text-[1.5xl]">
-                {data.flight.estimatedDeparture
-                  ? new Date(data.flight.estimatedDeparture).toLocaleString()
-                  : new Date(data.flight.departureTime).toLocaleString()}
+                {data.flight?.estimatedDeparture
+                  ? new Date(data.flight?.estimatedDeparture).toLocaleString()
+                  : new Date(data.flight?.departureTime).toLocaleString()}
               </span>
             </p>
             <p className="font-light text-xl">
               Arrival time:{" "}
               <span className="font-bold text-[1.5xl]">
-                {data.flight.estimatedArrival
-                  ? new Date(data.flight.estimatedArrival).toLocaleString()
-                  : new Date(data.flight.arrivalTime).toLocaleString()}
+                {data.flight?.estimatedArrival
+                  ? new Date(data.flight?.estimatedArrival).toLocaleString()
+                  : new Date(data.flight?.arrivalTime).toLocaleString()}
               </span>
             </p>
             <p className="font-light text-xl">

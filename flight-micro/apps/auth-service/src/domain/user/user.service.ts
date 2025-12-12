@@ -21,8 +21,16 @@ export class UserService {
   }
 
   async getUserById(id: string) {
+    const cached = await this.redisService.get(`user:${id}`);
+    if (cached) return { user: cached };
     const user = await this.userRepository.findById(id);
     const lastestUser = this.safeUser(user);
+
+    await this.redisService.set(
+      `user:${id}`,
+      JSON.stringify(lastestUser),
+      3600,
+    );
 
     return { user: lastestUser };
   }
@@ -41,7 +49,10 @@ export class UserService {
   }
 
   async countUsers() {
+    const cached = await this.redisService.get(`user:count`);
+    if (cached) return { count: parseInt(cached, 10) };
     const count = await this.userRepository.countUsers();
+    await this.redisService.set(`user:count`, count.toString(), 900);
     return { count };
   }
 
@@ -58,6 +69,11 @@ export class UserService {
       id,
     };
     const user = await this.userRepository.updateUser(data);
+    await this.redisService.set(
+      `user:${id}`,
+      JSON.stringify(this.safeUser(user)),
+      3600,
+    );
     return { user: this.safeUser(user) };
   }
 }

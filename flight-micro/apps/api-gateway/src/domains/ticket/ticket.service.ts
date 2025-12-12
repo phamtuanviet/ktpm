@@ -131,7 +131,7 @@ export class TicketService {
 
     const { flights } = (
       await this.httpService.axiosRef.get(
-        `${this.FLIGHT_URL}/flights-tickets-admin/`,
+        `${this.FLIGHT_URL}/flights-tickets-admin`,
         {
           params: { ids: flightIds },
           paramsSerializer: (params) => {

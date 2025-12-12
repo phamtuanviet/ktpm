@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { startWith } from 'rxjs';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
@@ -12,10 +11,14 @@ export class AirportRepository {
     const searchCondition: any = {};
 
     searchCondition.OR = [
-      { name: { startsWith: query, mode: 'insensitive' } },
-      { city: { startsWith: query, mode: 'insensitive' } },
-      { iataCode: { startsWith: query, mode: 'insensitive' } },
-      { icaoCode: { startsWith: query, mode: 'insensitive' } },
+      { name: { startsWith: query} },
+      { city: { startsWith: query } },
+      { iataCode: { startsWith: query } },
+      { icaoCode: { startsWith: query } },
+      // { name: { startsWith: query, mode: 'insensitive'} },
+      // { city: { startsWith: query , mode: 'insensitive'} },
+      // { iataCode: { startsWith: query , mode: 'insensitive'} },
+      // { icaoCode: { startsWith: query , mode: 'insensitive'} },
     ];
     return this.prismaService.airport.findMany({
       where: searchCondition,

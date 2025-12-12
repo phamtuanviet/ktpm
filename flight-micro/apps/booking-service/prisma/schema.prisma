@@ -46,8 +46,8 @@ enum FlightStatus {
 // Dữ liệu này độc lập và quan trọng cho đặt vé.
 model Passenger {
   id        String    @id @default(uuid())
-  fullName  String
-  email     String
+  fullName  String @db.Citext
+  email     String   @db.Citext
   dob       DateTime?
   passport  String?
   passengerType     PassengerType   @default(ADULT)
@@ -63,8 +63,8 @@ model FlightSeat {
   id          String        @id @default(uuid())
   // flightId chỉ là tham chiếu để đảm bảo Unique Constraint, 
   // Dữ liệu chi tiết về Flight sẽ được truy vấn từ Flight Service.
-  flightId         String  
-  seatClass                 SeatClass
+  flightId         String  @db.Citext
+  seatClass                 SeatClass 
   totalSeats                Int
   bookedSeats               Int        @default(0) // Quan trọng nhất, để kiểm tra chỗ trống
   price                     Float
@@ -85,15 +85,15 @@ model Ticket {
   
   // External IDs (Tham chiếu tới các service khác)
   
-  bookingReference  String          @unique // Mã đặt chỗ (PNR)
-  cancelCode        String          @unique // Mã hủy vé
+  bookingReference  String   @db.Citext       @unique // Mã đặt chỗ (PNR)
+  cancelCode        String   @db.Citext       @unique // Mã hủy vé
   
   // Thông tin ghế và hành khách
-  seatNumber        String?
+  seatNumber        String? @db.Citext
   flightSeat        FlightSeat      @relation(fields: [flightSeatId], references: [id])
-  flightSeatId      String
+  flightSeatId      String @db.Citext
   passenger         Passenger?      @relation("Ticket_Passenger", fields: [passengerId], references: [id])
-  passengerId       String  
+  passengerId       String @db.Citext
   // Thông tin giá và trạng thái
   discount          Float           @default(0)
   isCancelled       Boolean         @default(false)

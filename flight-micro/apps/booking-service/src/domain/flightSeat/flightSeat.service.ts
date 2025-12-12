@@ -21,6 +21,7 @@ export class FlightSeatService {
   }
 
   async getFlightSeatsByFlightId(id: string) {
+    
     const flightSeats =
       await this.flightSeatRepository.findFlightSeatByFlightId(id);
     return { flightSeats };

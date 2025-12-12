@@ -7,6 +7,7 @@ import { FilterTicketDto } from './dto/filterTicket.dto';
 import { SearchTicketDto } from './dto/searchTicket.dto';
 import { addDays, subDays, startOfDay } from 'date-fns';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
+import { RedisService } from 'src/redis/redis.service';
 
 @Injectable()
 export class TicketService {
@@ -14,6 +15,7 @@ export class TicketService {
     private readonly ticketRepository: TicketRepository,
     private readonly prismaService: PrismaService,
     private readonly amqpConnection: AmqpConnection,
+    private readonly redisService: RedisService,
   ) {}
   // Service methods would go here
 
@@ -194,6 +196,12 @@ export class TicketService {
   }
 
   async searchTicketForClient(query?: string, email?: string) {
+    const cached = await this.redisService.get(
+      `ticket:client:${email}:${query}`,
+    );
+    if (cached) {
+      return { tickets: cached };
+    }
     const tickets =
       await this.ticketRepository.getTicketByEmailOrBookingReference(
         query,
@@ -201,6 +209,12 @@ export class TicketService {
       );
 
     const lastTickets = tickets.map((ticket) => this.safeMapTicket(ticket));
+
+    await this.redisService.set(
+      `ticket:client:${email}:${query}`,
+      JSON.stringify(lastTickets),
+      300,
+    );
 
     return { tickets: lastTickets };
   }

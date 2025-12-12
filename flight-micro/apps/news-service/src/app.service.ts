@@ -12,7 +12,7 @@ import { FilterNewsDto } from './dto/filterNews.dto';
 @Injectable()
 export class AppService {
   constructor(
-    @Inject() private readonly redisService: RedisService,
+    private readonly redisService: RedisService,
     @Inject() private readonly prismaService: PrismaService,
     @Inject('logging-queue') private readonly loggingQueue: ClientProxy,
     @Inject() private readonly cloudinaryService: CloudinaryService,
@@ -49,7 +49,12 @@ export class AppService {
       body.isPublished,
       imageUrl,
     );
-    this.loggingQueue.emit('news created', news);
+    const cached = await this.redisService.get('news:count');
+    if (cached) {
+      const newCount = parseInt(cached) + 1;
+      await this.redisService.set('news:count', newCount.toString(), 900);
+    }
+    await this.redisService.del('news:latest');
 
     return { news };
   }
@@ -77,25 +82,35 @@ export class AppService {
       body.isPublished,
     );
     this.loggingQueue.emit('news update', news);
+    await this.redisService.set(`news:${id}`, JSON.stringify(news), 1500);
+    await this.redisService.del('news:latest');
 
     return { news };
   }
 
   async deleteNews(id: string) {
     const news = await this.appRepository.deleteNews(id);
-    this.loggingQueue.emit('news deleted', news);
+    await this.redisService.del(`news:${id}`);
     return { news: this.toSafeNews(news) };
   }
 
   async countNews() {
+    const cached = await this.redisService.get('news:count');
+    if (cached) return { count: parseInt(cached) };
     const count = await this.appRepository.countNews();
+    await this.redisService.set('news:count', count.toString(), 900);
     return { count };
   }
 
   async getNewsById(id: string) {
+    const cached = await this.redisService.get(`news:${id}`);
+    if (cached) return { news: JSON.parse(cached) };
     const news = await this.appRepository.findNewsById(id.toString());
     if (!news || news.isDeleted) {
       throw new HttpException('News not found', 404);
+    }
+    if (news) {
+      await this.redisService.set(`news:${id}`, JSON.stringify(news), 1500);
     }
     return { news };
   }
@@ -103,8 +118,20 @@ export class AppService {
   async getLatestNews(pagination: { skip?: number; take?: number }) {
     const skipNum = pagination.skip || 0;
     const takeNum = pagination.take || 5;
+    if (skipNum === 0 && takeNum === 5) {
+      const cached = await this.redisService.get('news:latest');
+      if (cached) return { listNews: cached };
+    }
     const newsList = await this.appRepository.getLatestNews(skipNum, takeNum);
     const safeNewsList = newsList.map((news) => this.toSafeNews(news));
+    if (skipNum === 0 && takeNum === 5 && safeNewsList.length > 0) {
+      await this.redisService.set(
+        'news:latest',
+        JSON.stringify(safeNewsList),
+        900,
+      );
+    }
+
     return { listNews: safeNewsList };
   }
 

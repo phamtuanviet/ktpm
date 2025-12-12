@@ -1,5 +1,5 @@
 import { Transform } from 'class-transformer';
-import { IsArray, IsString, ArrayNotEmpty } from 'class-validator';
+import { IsArray, IsString, ArrayNotEmpty, IsOptional } from 'class-validator';
 
 export class FlightForTicketsDto {
   @Transform(({ value }) => {
@@ -9,7 +9,8 @@ export class FlightForTicketsDto {
     return value;
   })
   @IsArray()
-  @ArrayNotEmpty()
+  // @ArrayNotEmpty()
+  @IsOptional()
   @IsString({ each: true })
   ids: string[];
 }
