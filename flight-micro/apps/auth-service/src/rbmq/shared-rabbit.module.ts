@@ -13,13 +13,6 @@ import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
             durable: true,
           },
         },
-        {
-          name: 'logging-exchange',
-          type: 'topic',
-          options: {
-            durable: true,
-          },
-        },
       ],
       uri: 'amqp://localhost:5672',
     }),

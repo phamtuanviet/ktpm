@@ -18,3 +18,4 @@ scenarios:
       - think: 3
       - get:
           url: "/api/flight/flights-client?tripType=oneway&departureAirport=Noi+Bai+International+Airport&arrivalAirport=Tan+Son+Nhat+International+Airport&startDate=2025-12-27T17:00:00.000Z&returnDate=2025-12-28T17:00:00.000Z&adults=1&children=0&infants=0"
+# artillery run load-test.yml > output4.log
