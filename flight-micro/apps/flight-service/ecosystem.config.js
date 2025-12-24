@@ -3,7 +3,7 @@ module.exports = {
     {
       name: 'flight-service',
       script: 'dist/main.js',
-      instances: 2,
+      instances: 3,
       exec_mode: 'cluster',
       autorestart: true,
       watch: false,

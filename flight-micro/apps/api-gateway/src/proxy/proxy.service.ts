@@ -6,6 +6,8 @@ import {
 import axios from 'axios';
 import FormData from 'form-data';
 import { Request } from 'express'; // Đảm bảo bạn đã cài đặt thư viện 'form-data'
+import * as http from 'http';
+import * as https from 'https';
 
 // Định nghĩa kiểu dữ liệu cho Request để có thể truy cập 'file' (tùy thuộc vào Multer)
 // Trong môi trường thực tế, bạn nên định nghĩa Interface này trong một file riêng
@@ -50,6 +52,12 @@ export class ProxyService {
     }
     return filteredHeaders;
   }
+  private httpAgent = new http.Agent({
+    keepAlive: true,        // Bật tính năng giữ kết nối
+    maxSockets: 100,        // Cho phép 100 kết nối đồng thời tới mỗi service đích
+    maxFreeSockets: 10,     // Giữ lại 10 kết nối rảnh rỗi chờ request tiếp theo
+    timeout: 60000,         // Socket sống trong 60s
+  });
 
   async forward(req: CustomRequest, targetUrl: string) {
     const method = req.method;
@@ -101,6 +109,9 @@ export class ProxyService {
       headers['x-user'] = JSON.stringify(req.userCurrent);
     }
 
+    
+
+
     try {
       const response = await axios({
         url: targetUrl,
@@ -108,8 +119,9 @@ export class ProxyService {
         headers,
         data,
         params: req.query,
-        validateStatus: () => true, 
+        validateStatus: () => true,
         timeout: 15000, // Tăng timeout lên 15s cho an toàn
+        httpAgent: this.httpAgent,
       });
 
       // 3. Xử lý Lỗi và Chuyển tiếp Status
@@ -123,15 +135,18 @@ export class ProxyService {
       }
 
       return response.data;
-    } catch (error) {
-      // Bắt các lỗi kết nối (timeout, DNS, network,...) và HttpException đã ném ở trên
+    } catch (error: any) {
       if (error instanceof HttpException) {
-        throw error; // Ném lại lỗi đã được chuyển tiếp
+        throw error;
       }
 
-      // Xử lý lỗi kết nối Axios thực sự
-      console.error('Proxy connection error:', error.message);
-      console.error('Axios error response:', error.response?.data);
+      console.error('Proxy error message:', error.message);
+      console.error('Proxy error code:', error.code);
+      console.error('Proxy error syscall:', error.syscall);
+      console.error('Proxy error config url:', error.config?.url);
+      console.error('Proxy error response status:', error.response?.status);
+      console.error('Proxy error response data:', error.response?.data);
+
       throw new InternalServerErrorException(
         'Cannot connect to downstream service or proxy network error.',
       );

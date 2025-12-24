@@ -15,6 +15,7 @@ import { LoggingModule } from './log/logging.module';
 import { LoggingService } from './log/logging.service';
 import { APP_FILTER } from '@nestjs/core';
 import { AllExceptionsFilter } from './common/filters/allException.filter';
+import { SharedModule } from './config/shared.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { AllExceptionsFilter } from './common/filters/allException.filter';
     AircraftModule,
     AirportModule,
     TicketModule,
+    SharedModule
   ],
   controllers: [],
   providers: [

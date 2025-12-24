@@ -1,10 +1,9 @@
 import { Module } from '@nestjs/common';
 import { FlightController } from './flight.controller';
 import { FlightService } from './flight.service';
-import { HttpModule } from '@nestjs/axios';
 
 @Module({
-  imports: [HttpModule],
+  imports: [],
   controllers: [FlightController],
   providers: [FlightService],
 })
