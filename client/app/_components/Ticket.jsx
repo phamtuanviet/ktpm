@@ -94,7 +94,7 @@ const Ticket = ({ data, handleCancel }) => {
             </p>
           </div>
         </div>
-        <div
+        {/* <div
           className="flex flex-col lg:flex-row items-center justify-center py-2"
           onClick={() => setIsDetail((prev) => !prev)}
         >
@@ -125,7 +125,7 @@ const Ticket = ({ data, handleCancel }) => {
               </div>
             ))}
           </div>
-        )}
+        )} */}
 
         <div className="flex flex-row justify-start py-2 gap-3 items-center">
           <div className="w-[25rem]">

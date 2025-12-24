@@ -104,7 +104,7 @@ export class AppService {
 
   async getNewsById(id: string) {
     const cached = await this.redisService.get(`news:${id}`);
-    if (cached) return { news: JSON.parse(cached) };
+    if (cached) return { news: cached };
     const news = await this.appRepository.findNewsById(id.toString());
     if (!news || news.isDeleted) {
       throw new HttpException('News not found', 404);
