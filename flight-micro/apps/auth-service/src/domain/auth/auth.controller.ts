@@ -1,4 +1,10 @@
-import { Body, Controller, Get, Post, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpException,
+  Post,
+  Req,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { VerifyOtpDto } from './dto/verifyEmail.dto';
@@ -9,6 +15,7 @@ import { EmailDto } from './dto/email.dto';
 import { ResetPasswordDto } from './dto/resetPassword.dto';
 import { GoogleLoginDto } from './dto/googleLogin.dto';
 import type { Request } from 'express';
+import { RefreshDto } from './dto/refresh.dto';
 
 @Controller('api/auth')
 export class AuthController {
@@ -63,8 +70,23 @@ export class AuthController {
   }
 
   @Post('reset-password')
-  async resetPassword(@Body() body: ResetPasswordDto) {
-    return await this.authService.resetPassword(body.id, body.newPassword);
+  async resetPassword(@Body() body: ResetPasswordDto, @Req() req: Request) {
+    let user = null;
+
+    const userHeader = req?.headers['x-user'];
+    if (userHeader) {
+      try {
+        user = JSON.parse(userHeader as string);
+        return await this.authService.resetPassword(
+          (user as any).id,
+          body.newPassword,
+          body.deviceInfo,
+        );
+      } catch (error) {
+        console.error('Invalid x-user header:', error);
+      }
+    }
+    return new HttpException('Unauthorized', 401);
   }
 
   @Post('google-login')
@@ -76,16 +98,17 @@ export class AuthController {
   }
 
   @Post('refresh-access-token')
-  async refreshAccessToken(@Req() req: Request) {
+  async refreshAccessToken(@Body() body: RefreshDto, @Req() req: Request) {
     return await this.authService.refreshAccessToken(
       req.cookies['refreshToken'],
+      body.deviceInfo,
     );
   }
 
-  @Get('google-login-authenticate')
-  async authenticateWithGoogle(@Req() req: Request) {
-    return await this.authService.authenticateWithGoogle(
-      req.cookies['refreshToken'],
-    );
-  }
+  // @Get('google-login-authenticate')
+  // async authenticateWithGoogle(@Req() req: Request) {
+  //   return await this.authService.authenticateWithGoogle(
+  //     req.cookies['refreshToken'],
+  //   );
+  // }
 }

@@ -271,6 +271,7 @@ const authSlice = createSlice({
 
       .addCase(resetPassword.fulfilled, (state, action) => {
         state.message = "Reset password successfully";
+        localStorage.setItem("accessToken", action.payload.accessToken);
       })
       .addCase(resetPassword.rejected, (state, action) => {
         state.message = "Reset password failed";

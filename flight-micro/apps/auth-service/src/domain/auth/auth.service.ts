@@ -4,6 +4,8 @@ import { RedisService } from 'src/redis/redis.service';
 import { AuthRepository } from './auth.repository';
 import { RegisterDto } from './dto/register.dto';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
+
 import { AuthUser } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
 import { RefreshTokenRepository } from './refreshToken.repository';
@@ -46,6 +48,10 @@ export class AuthService {
         expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN,
       },
     );
+  }
+
+  createRefreshTokenNew() {
+    return crypto.randomBytes(64).toString('hex');
   }
 
   decodeRefreshToken(token: string): string {
@@ -284,17 +290,33 @@ export class AuthService {
     };
   }
 
-  async resetPassword(userId: string, newPassword: string) {
+  async resetPassword(userId: string, newPassword: string, deviceInfo: string) {
     const user = await this.authRepository.findById(userId);
     if (!user) {
       throw new HttpException('User not found', 404);
     }
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     await this.authRepository.updatePassword(userId, hashedPassword);
+    await this.refreshTokenRepo.revokeAllForUser(userId);
+    const accessToken = this.createAccessToken(user);
+    const refreshToken = this.createRefreshToken(user);
+
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+    await this.refreshTokenRepo.create(
+      user.id,
+      refreshToken,
+      expiresAt,
+      deviceInfo,
+    );
 
     const safeUser = this.toSafeUser(user);
 
-    return { user: safeUser };
+    return {
+      user: safeUser,
+      accessToken,
+      refreshToken,
+    };
   }
 
   async googleLogin(
@@ -380,7 +402,7 @@ export class AuthService {
     }
   }
 
-  async refreshAccessToken(refreshToken: string) {
+  async refreshAccessToken(refreshToken: string, deviceInfo: string) {
     if (!refreshToken) {
       throw new HttpException('Refresh token is required', 400);
     }
@@ -392,6 +414,7 @@ export class AuthService {
     const storedToken = await this.refreshTokenRepo.findValidToken(
       userId,
       refreshToken,
+      deviceInfo,
     );
     if (!storedToken) {
       throw new HttpException('Invalid or expired refresh token', 401);
@@ -403,27 +426,27 @@ export class AuthService {
     };
   }
 
-  async authenticateWithGoogle(refreshToken: string) {
-    if (!refreshToken) {
-      throw new HttpException('Refresh token is required', 400);
-    }
-    const userId = this.decodeRefreshToken(refreshToken);
-    const user = await this.authRepository.findById(userId);
-    if (!user) {
-      throw new HttpException('User not found', 404);
-    }
-    const storedToken = await this.refreshTokenRepo.findValidToken(
-      userId,
-      refreshToken,
-    );
-    if (!storedToken) {
-      throw new HttpException('Invalid or expired refresh token', 401);
-    }
-    const newAccessToken = this.createAccessToken(user);
+  // async authenticateWithGoogle(refreshToken: string) {
+  //   if (!refreshToken) {
+  //     throw new HttpException('Refresh token is required', 400);
+  //   }
+  //   const userId = this.decodeRefreshToken(refreshToken);
+  //   const user = await this.authRepository.findById(userId);
+  //   if (!user) {
+  //     throw new HttpException('User not found', 404);
+  //   }
+  //   const storedToken = await this.refreshTokenRepo.findValidToken(
+  //     userId,
+  //     refreshToken,
+  //   );
+  //   if (!storedToken) {
+  //     throw new HttpException('Invalid or expired refresh token', 401);
+  //   }
+  //   const newAccessToken = this.createAccessToken(user);
 
-    return {
-      accessToken: newAccessToken,
-      user: this.toSafeUser(user),
-    };
-  }
+  //   return {
+  //     accessToken: newAccessToken,
+  //     user: this.toSafeUser(user),
+  //   };
+  // }
 }

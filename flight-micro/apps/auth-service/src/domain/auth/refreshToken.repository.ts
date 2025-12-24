@@ -6,7 +6,13 @@ import { PrismaService } from 'src/prisma/prisma.service';
 export class RefreshTokenRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(userId: string, token: string, expiresAt: Date, deviceInfo?: string, tx?: any) {
+  async create(
+    userId: string,
+    token: string,
+    expiresAt: Date,
+    deviceInfo?: string,
+    tx?: any,
+  ) {
     const tokenHash = await bcrypt.hash(token, 10);
     const db = tx ?? this.prisma;
     return db.refreshToken.create({
@@ -19,7 +25,7 @@ export class RefreshTokenRepository {
     });
   }
 
-  async findValidToken(userId: string,token: string) {
+  async findValidToken(userId: string, token: string, deviceInfo?: string) {
     const tokens = await this.prisma.refreshToken.findMany({
       where: {
         userId,
@@ -30,9 +36,19 @@ export class RefreshTokenRepository {
 
     for (const t of tokens) {
       const match = await bcrypt.compare(token, t.tokenHash);
-      if (match) return t;
+      if (match) {
+        
+        if (t.deviceInfo === deviceInfo) {
+          return t;
+        } else {
+          await this.prisma.refreshToken.update({
+            where: { id: t.id },
+            data: { revoked: true },
+          });
+          return null;
+        }
+      }
     }
-
     return null;
   }
 
@@ -42,6 +58,7 @@ export class RefreshTokenRepository {
       data: { revoked: true },
     });
   }
+
 
   async revokeAllForUser(userId: string) {
     return this.prisma.refreshToken.updateMany({

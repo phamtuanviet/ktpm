@@ -129,9 +129,18 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Post('reset-password')
   async resetPassword(@Req() req: Request, @Res() res: Response) {
-    const { user } = await this.authService.resetPassword(req);
+    const { user, refreshToken, accessToken } =
+      await this.authService.resetPassword(req);
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
     return res.json({
       user,
+      accessToken,
       success: true,
       message: 'Password reset successfully.',
     });

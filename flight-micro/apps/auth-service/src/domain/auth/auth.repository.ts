@@ -26,6 +26,7 @@ export class AuthRepository {
 
   updatePassword(userId: string, hashedPassword: string, tx?: any) {
     const db = tx ?? this.prismaService;
+    
     return db.authUser.update({
       where: { id: userId },
       data: { password: hashedPassword },

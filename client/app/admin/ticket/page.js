@@ -42,24 +42,36 @@ const page = () => {
     >
       <td className="font-sans hidden lg:table-cell">{item.id}</td>
       <td className="font-sans hidden lg:table-cell">
-        {item.flight.flightNumber}
+        {item?.flight?.flightNumber ? item.flight.flightNumber : "N/A"}
       </td>
       <td className="font-sans hidden lg:table-cell">
         {item.passenger.fullName}
       </td>
-      <td className="font-sans">{item.flight.departureAirport.name}</td>
-      <td className="font-sans">{item.flight.arrivalAirport.name}</td>
+      <td className="font-sans">
+        {item.flight?.departureAirport.name
+          ? item.flight.departureAirport.name
+          : "N/A"}
+      </td>
+      <td className="font-sans">
+        {item.flight?.arrivalAirport.name
+          ? item.flight.arrivalAirport.name
+          : "N/A"}
+      </td>
 
       <td className="font-sans">
-        {item.flight.estimatedDeparture
+        {item.flight?.estimatedDeparture
           ? new Date(item.flight.estimatedDeparture).toLocaleString()
-          : new Date(item.flight.departureTime).toLocaleString()}
+          : item.flight?.departureTime
+          ? new Date(item.flight.departureTime).toLocaleString()
+          : "--"}
       </td>
       <td className="font-sans hidden lg:table-cell">{item.seatNumber}</td>
       <td className="font-sans table-cell sm:hidden">
         {item.bookingReference}
       </td>
-      <td className="font-sans hidden lg:table-cell">{item.passenger.passengerType}</td>
+      <td className="font-sans hidden lg:table-cell">
+        {item.passenger.passengerType}
+      </td>
       <td className="font-sans hidden lg:table-cell">
         {item.flightSeat.seatClass}
       </td>

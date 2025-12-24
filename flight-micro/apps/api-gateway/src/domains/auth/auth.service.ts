@@ -122,6 +122,11 @@ export class AuthService {
   }
 
   async resetPassword(@Req() req: Request) {
+    const deviceInfo = req.headers['user-agent'];
+    req.body = {
+      ...req.body,
+      deviceInfo,
+    };
     return await this.proxyService.forward(
       req,
       this.baseUrl + '/reset-password',
@@ -137,6 +142,11 @@ export class AuthService {
   }
 
   async refreshAccessToken(@Req() req: Request) {
+    const deviceInfo = req.headers['user-agent'];
+    req.body = {
+      ...req.body,
+      deviceInfo,
+    };
     return await this.proxyService.forward(
       req,
       this.baseUrl + '/refresh-access-token',
@@ -153,10 +163,6 @@ export class AuthService {
       }
       return new HttpException('Unauthorized', 401);
     } catch (error) {
-      this.logginService.error('Error during Google authentication', {
-        error,
-        body: req.body,
-      });
       error._logged = true;
       throw new HttpException(error.message, 500);
     }
